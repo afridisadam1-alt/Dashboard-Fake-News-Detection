@@ -1,5 +1,5 @@
 # =========================================================
-# app.py – Disinformation Detection Dashboard (DL + ML Cached)
+# app.py – Disinformation Detection Dashboard (DL + ML Cached, Toolbar Hidden)
 # =========================================================
 
 import os, warnings, pickle, re
@@ -164,6 +164,16 @@ def load_dl_model(m, t, dataset_name):
     return model, tok
 
 # =========================================================
+# Hide download button / toolbar
+# =========================================================
+st.markdown("""
+    <style>
+        [data-testid="stElementToolbar"] {display: none !important;}
+        [data-testid="stDataFrameToolbar"] {display: none !important;}
+    </style>
+""", unsafe_allow_html=True)
+
+# =========================================================
 # Sidebar – model selection
 # =========================================================
 st.sidebar.title("Model Selection")
@@ -220,8 +230,17 @@ if search_query:
     df_f = df_f[df_f[text_col].str.contains(search_query, case=False, na=False)]
     df_f.reset_index(drop=True, inplace=True)
 
+# =========================================================
+# Dataset view with Select column (toolbar hidden)
+# =========================================================
 df_view = df_f.groupby(label_col, group_keys=False).head(10) if label_filter=="All" else df_f.head(20)
-edited = st.data_editor(df_view, hide_index=True, disabled=[c for c in df_view.columns if c!="Select"], use_container_width=True)
+edited = st.data_editor(
+    df_view,
+    hide_index=True,
+    disabled=[c for c in df_view.columns if c!="Select"],
+    use_container_width=True
+)
+
 selected_rows = edited[edited["Select"]==True]
 if not selected_rows.empty:
     st.session_state.input_text = selected_rows.iloc[0][text_col]
