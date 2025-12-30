@@ -1,0 +1,59 @@
+# ========================
+# Datasets
+# ========================
+
+# Ignore original large datasets
+datasets/EUvsDisinfo-Dataset.csv
+datasets/EUvsIPF-Dataset.csv
+datasets/Pandy-Dataset.csv
+datasets/FA-KES-Dataset.csv
+datasets/ISOT-Dataset.csv
+datasets/EUvsISOT-Dataset.csv
+datasets/ISOT_True.csv
+datasets/ISOT_Fake.csv
+
+# Keep the sampled CSVs
+!datasets/*_sample20.csv
+
+# ========================
+# Model folders (ignore trained models)
+# ========================
+models/*
+dl_models/*
+
+# ========================
+# Python cache / temp
+# ========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# ========================
+# Jupyter notebook checkpoints
+# ========================
+.ipynb_checkpoints/
+
+# ========================
+# OS-specific files
+# ========================
+.DS_Store
+Thumbs.db
+
+# ========================
+# Logs or temporary files
+# ========================
+*.log
+*.tmp
+*.part
+
+# ========================
+# Python virtual environment
+# ========================
+env/
+venv/
+
+# ========================
+# Streamlit cache
+# ========================
+.streamlit/cache/
