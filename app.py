@@ -2,6 +2,21 @@
 # app.py – Disinformation Detection Dashboard (DL + ML Cached, Toolbar Hidden)
 # =========================================================
 
+
+
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", package])
+
+# Dynamically install heavy packages
+install("tensorflow-cpu==2.13.0")
+install("wordcloud==1.9.2")
+install("gdown==4.6.4")
+
+# Import them after install
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from wordcloud import WordCloud
+import gdown
 import os, warnings, pickle, re
 import streamlit as st
 import pandas as pd
@@ -15,20 +30,7 @@ import altair as alt
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import gdown
-import subprocess
-import sys
-
-def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", package])
-
-# Install heavy packages dynamically
-install("tensorflow-cpu==2.13.0")
-install("wordcloud==1.9.2")
-
-# Now import them safely
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from wordcloud import WordCloud
+import subprocess, sys
 # =========================================================
 # System cleanup
 # =========================================================
