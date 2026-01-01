@@ -155,36 +155,13 @@ def load_ml_model(m, v, dataset_name):
 # =========================================================
 # Load DL model (cached)
 # =========================================================
-# =========================================================
-# Load DL model (cached)
-# =========================================================
 @st.cache_resource
 def load_dl_model(m, t, dataset_name):
     model_file = download_from_gdrive(GDRIVE_DL_MODELS[dataset_name]["model"], m)
     tok_file = download_from_gdrive(GDRIVE_DL_MODELS[dataset_name]["tokenizer"], t)
-    
-    if not Path(model_file).exists() or Path(model_file).stat().st_size == 0:
-        st.error(f"Model file {model_file} not found or empty!")
-        return None, None
-    if not Path(tok_file).exists() or Path(tok_file).stat().st_size == 0:
-        st.error(f"Tokenizer file {tok_file} not found or empty!")
-        return None, None
-    
-    try:
-        model = load_model(model_file, compile=False)
-    except Exception as e:
-        st.error(f"Failed to load model: {e}")
-        return None, None
-
-    try:
-        with open(tok_file, "rb") as f: 
-            tok = pickle.load(f)
-    except Exception as e:
-        st.error(f"Failed to load tokenizer: {e}")
-        return None, None
-
+    model = load_model(model_file, compile=False)
+    with open(tok_file, "rb") as f: tok = pickle.load(f)
     return model, tok
-
 
 # =========================================================
 # Hide download button / toolbar
