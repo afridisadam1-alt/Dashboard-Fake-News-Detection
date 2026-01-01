@@ -21,13 +21,14 @@ import sys
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", package])
 
-# Install TensorFlow CPU
+# Install heavy packages dynamically
 install("tensorflow-cpu==2.13.0")
-
-# Install WordCloud
 install("wordcloud==1.9.2")
 
-
+# Now import them safely
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from wordcloud import WordCloud
 # =========================================================
 # System cleanup
 # =========================================================
