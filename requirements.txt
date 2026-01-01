@@ -1,7 +1,7 @@
 # Streamlit
 streamlit==1.26.0
 
-# ML / DL for inference only (CPU, lightweight)
+# ML / DL (inference only)
 numpy==1.24.4
 pandas==2.1.1
 scikit-learn==1.3.0
