@@ -15,7 +15,8 @@ import altair as alt
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import gdown
-
+import subprocess
+subprocess.run(["pip", "install", "wordcloud==1.9.2"])
 # =========================================================
 # System cleanup
 # =========================================================
