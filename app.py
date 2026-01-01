@@ -1,6 +1,5 @@
 # =========================================================
-# app.py – Disinformation Detection Dashboard (DL + ML)
-# Streamlit Cloud compatible
+# app.py – Disinformation Detection Dashboard (DL + ML Cached, Toolbar Hidden)
 # =========================================================
 
 import os, warnings, pickle, re
@@ -121,13 +120,7 @@ GDRIVE_DL_MODELS = {
 def download_from_gdrive(file_id, filename):
     if not Path(filename).exists() or Path(filename).stat().st_size == 0:
         url = f"https://drive.google.com/uc?id={file_id}"
-        print(f"Downloading {filename} from Google Drive...")
         gdown.download(url, filename, quiet=False)
-    # Verify download
-    if Path(filename).exists() and Path(filename).stat().st_size > 0:
-        print(f"{filename} downloaded successfully.")
-    else:
-        st.error(f"Failed to download {filename}. Please check file ID.")
     return filename
 
 # =========================================================
@@ -160,8 +153,9 @@ def load_ml_model(m, v, dataset_name):
     return model, vec
 
 # =========================================================
-# Load DL model (no cache for Streamlit Cloud)
+# Load DL model (cached)
 # =========================================================
+@st.cache_resource
 def load_dl_model(m, t, dataset_name):
     model_file = download_from_gdrive(GDRIVE_DL_MODELS[dataset_name]["model"], m)
     tok_file = download_from_gdrive(GDRIVE_DL_MODELS[dataset_name]["tokenizer"], t)
@@ -237,7 +231,7 @@ if search_query:
     df_f.reset_index(drop=True, inplace=True)
 
 # =========================================================
-# Dataset view with Select column
+# Dataset view with Select column (toolbar hidden)
 # =========================================================
 df_view = df_f.groupby(label_col, group_keys=False).head(10) if label_filter=="All" else df_f.head(20)
 edited = st.data_editor(
