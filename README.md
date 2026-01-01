@@ -1,7 +1,7 @@
 # Fake News Detection Project
 
 ## Overview
-This project trains and evaluates deep learning and machine learning models for fake news detection on multiple datasets (FA-KES, Pandy, EUvsIPF, EUvsDisinfo, ISOT, EUvsISOT).
+This project trains and evaluates deep learning and machine learning models for fake news detection on multiple datasets (FA-KES, George McIntire, ISOT, EUvsIGF, EUvsDisinfo, ISOT, EUvsISOT).
 
 ## Requirements
 - Python 3.9+
