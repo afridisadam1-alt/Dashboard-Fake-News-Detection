@@ -1,3 +1,4 @@
+# Streamlit
 streamlit==1.26.0
 
 # ML & DL
@@ -17,11 +18,9 @@ openpyxl==3.1.2
 
 # Utilities
 gdown==4.6.4
+cloudpickle==2.3.1
 
-# Rich / Markdown
+# Rich / Markdown (optional)
 rich==14.2.0
 markdown-it-py==4.0.0
 mdurl==0.1.2
-
-# Optional caching
-cloudpickle==2.3.1
