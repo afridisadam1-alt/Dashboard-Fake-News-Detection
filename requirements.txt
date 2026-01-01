@@ -6,6 +6,7 @@ tensorflow==2.13.0
 numpy==1.24.4
 pandas==2.1.1
 scikit-learn==1.3.0
+
 matplotlib==3.8.1
 altair==5.0.1
 wordcloud==1.9.2
