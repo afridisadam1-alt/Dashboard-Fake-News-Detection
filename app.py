@@ -16,11 +16,17 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import gdown
 import subprocess
+import sys
 
-# Install TensorFlow CPU if running on Streamlit Cloud
-subprocess.run(["pip", "install", "--quiet", "tensorflow-cpu==2.13.0"])
-# Install WordCloud if needed
-subprocess.run(["pip", "install", "--quiet", "wordcloud==1.9.2"])
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", package])
+
+# Install TensorFlow CPU
+install("tensorflow-cpu==2.13.0")
+
+# Install WordCloud
+install("wordcloud==1.9.2")
+
 
 # =========================================================
 # System cleanup
