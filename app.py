@@ -15,17 +15,19 @@ import altair as alt
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import gdown
-# Check versions
+import tensorflow as tf
+
+# =========================================================
+# Check package versions
+# =========================================================
 print("streamlit:", st.__version__)
 print("pandas:", pd.__version__)
 print("numpy:", np.__version__)
 print("PyPDF2:", PdfReader.__module__.split('.')[0], "version not directly accessible")
 print("python-docx:", Document.__module__.split('.')[0], "version not directly accessible")
-import tensorflow as tf
 print("tensorflow:", tf.__version__)
 print("altair:", alt.__version__)
 print("wordcloud:", WordCloud.__module__.split('.')[0], "version not directly accessible")
-
 print("gdown:", gdown.__version__)
 
 # =========================================================
@@ -224,8 +226,8 @@ def predict(text):
 # Dataset exploration
 # =========================================================
 st.subheader("Dataset Label Distribution")
-df_vc = df[df[label_col].notna()]
-st.dataframe(df_vc[label_col].value_counts().rename("Count"), use_container_width=True)
+df_vc = df[df[label_col].notna()]  # FIXED: define df_vc
+st.dataframe(df_vc[label_col].value_counts().rename("Count"), width='stretch')  # Corrected
 
 # =========================================================
 # Text search / filter
@@ -243,14 +245,14 @@ if search_query:
     df_f.reset_index(drop=True, inplace=True)
 
 # =========================================================
-# Dataset view with Select column (toolbar hidden)
+# Dataset view / data editor
 # =========================================================
 df_view = df_f.groupby(label_col, group_keys=False).head(10) if label_filter=="All" else df_f.head(20)
 edited = st.data_editor(
     df_view,
     hide_index=True,
     disabled=[c for c in df_view.columns if c!="Select"],
-    use_container_width=True
+    width='stretch'  # Corrected
 )
 
 selected_rows = edited[edited["Select"]==True]
@@ -302,7 +304,7 @@ if st.button("Predict") and st.session_state.input_text:
                 y=alt.Y("Word:N", sort='-x'),
                 tooltip=["Word","Importance"]
             ).properties(height=400)
-            st.altair_chart(chart, use_container_width=True)
+            st.altair_chart(chart, width='container')  # Keep 'container' for charts
         else:
             st.info("No prominent words detected.")
     else:
