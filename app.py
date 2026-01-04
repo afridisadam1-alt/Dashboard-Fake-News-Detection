@@ -205,6 +205,19 @@ else:
 
 df, label_col = load_dataset(cfg, dataset)
 text_col = cfg["text_col"]
+# =========================================================
+# STREAMLIT CLOUD SAFETY FIX (TF-IDF NotFittedError)
+# =========================================================
+if is_ml and not hasattr(vectorizer, "idf_"):
+    st.warning("⚠️ TF-IDF vectorizer not fitted. Fitting on sample dataset for prediction & visualization.")
+
+    vectorizer.fit(
+        df[text_col]
+        .astype(str)
+        .str.lower()
+        .tolist()
+    )
+
 
 # =========================================================
 # Prediction function
