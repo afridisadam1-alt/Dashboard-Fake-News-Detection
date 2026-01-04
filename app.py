@@ -304,7 +304,8 @@ if st.button("Predict") and st.session_state.input_text:
                 y=alt.Y("Word:N", sort='-x'),
                 tooltip=["Word","Importance"]
             ).properties(height=400)
-            st.altair_chart(chart, width='container')  # Keep 'container' for charts
+            st.altair_chart(chart)  # Chart size controlled by Altair itself
+ # Keep 'container' for charts
         else:
             st.info("No prominent words detected.")
     else:
