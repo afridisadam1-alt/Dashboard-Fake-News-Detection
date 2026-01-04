@@ -2,21 +2,6 @@
 # app.py – Disinformation Detection Dashboard (DL + ML Cached, Toolbar Hidden)
 # =========================================================
 
-
-
-def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", package])
-
-# Dynamically install heavy packages
-install("tensorflow-cpu==2.13.0")
-install("wordcloud==1.9.2")
-install("gdown==4.6.4")
-
-# Import them after install
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from wordcloud import WordCloud
-import gdown
 import os, warnings, pickle, re
 import streamlit as st
 import pandas as pd
@@ -30,7 +15,19 @@ import altair as alt
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import gdown
-import subprocess, sys
+# Check versions
+print("streamlit:", st.__version__)
+print("pandas:", pd.__version__)
+print("numpy:", np.__version__)
+print("PyPDF2:", PdfReader.__module__.split('.')[0], "version not directly accessible")
+print("python-docx:", Document.__module__.split('.')[0], "version not directly accessible")
+import tensorflow as tf
+print("tensorflow:", tf.__version__)
+print("altair:", alt.__version__)
+print("wordcloud:", WordCloud.__module__.split('.')[0], "version not directly accessible")
+
+print("gdown:", gdown.__version__)
+
 # =========================================================
 # System cleanup
 # =========================================================
