@@ -17,3 +17,8 @@ GDRIVE_ML_MODELS = {
     "EUvsIPF": {"model": "euvsipf_pac.pkl", "vectorizer": "euvsipf_vectorizer.pkl"},
     "EUvsDisinfo": {"model": "euvsdisinfo_pac.pkl", "vectorizer": "euvsdisinfo_vectorizer.pkl"},
 }
+GDRIVE_DL_MODELS = {
+    "FA-KES": {"model": "FA-KES_bilstm.h5", "tokenizer": "FA-KES_tokenizer.pkl"},
+    "ISOT": {"model": "ISOT_bilstm.h5", "tokenizer": "ISOT_tokenizer.pkl"},
+    "EUvsISOT": {"model": "EUvsISOT_bilstm.h5", "tokenizer": "EUvsISOT_tokenizer.pkl"},
+}

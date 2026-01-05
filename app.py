@@ -111,9 +111,9 @@ GDRIVE_SAMPLE_FILES = {
     "George McIntire": "Pandy-Dataset_sample20.csv",
     "EUvsIPF": "EUvsIPF-Dataset_sample20.csv",
     "EUvsDisinfo": "EUvsDisinfo-Dataset_sample20.csv",
-    "FA-KES": "1xYHjkuNGhlmUy1iOMqRXfMXUOwACiSvb",
-    "ISOT": "17FCbvF2A12iE6TlHcbT4a5jrHhvIYT8t",
-    "EUvsISOT": "1T3COBdd6Co9OnCSwh7_ehOsVVJePGeP-",
+    "FA-KES": "FA-KES-Dataset_sample20.csv",
+    "ISOT": "ISOT-Dataset_sample20.csv",
+    "EUvsISOT": "1EUvsISOT-Dataset_sample20.csv",
 }
 
 GDRIVE_ML_MODELS = {
@@ -123,9 +123,9 @@ GDRIVE_ML_MODELS = {
 }
 
 GDRIVE_DL_MODELS = {
-    "FA-KES": {"model": "1e_2oC7IuT3GMW4pboqvD08bNh1xomuPK", "tokenizer": "1xUs4rWebBncfPl25w0CWMF3im0qSD8Ki"},
-    "ISOT": {"model": "1ir5P0koTRvPtdT28wim6ZbS5kRnziUGa", "tokenizer": "1qT3ltg06aBX3TJBfFBW8xFeHuTPdgLLq"},
-    "EUvsISOT": {"model": "15dHJ-jwycNppM9QaKNWsyrRb5f4wPB2X", "tokenizer": "13UyrLbmYXmL6FzyRhOnmR2ipBBJ_0Mwi"},
+    "FA-KES": {"model": "FA-KES_bilstm.h5", "tokenizer": "FA-KES_tokenizer.pkl"},
+    "ISOT": {"model": "ISOT_bilstm.h5", "tokenizer": "ISOT_tokenizer.pkl"},
+    "EUvsISOT": {"model": "EUvsISOT_bilstm.h5", "tokenizer": "EUvsISOT_tokenizer.pkl"},
 }
 
 # =========================================================
