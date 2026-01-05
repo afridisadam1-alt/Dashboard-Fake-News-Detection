@@ -149,9 +149,12 @@ def load_dataset(cfg, dataset_name):
 def load_ml_model(m,v,dataset_name):
     model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
     vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
-    with open(model_file,"rb") as f: model=pickle.load(f)
-    with open(vec_file,"rb") as f: vectorizer=pickle.load(f)
+    with open(model_file,"rb") as f:
+        model = pickle.load(f)
+    with open(vec_file,"rb") as f:
+        vectorizer = pickle.load(f)
     return model, vectorizer
+
 
 
 
