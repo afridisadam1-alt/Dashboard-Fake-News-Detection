@@ -139,36 +139,37 @@ def load_dataset(cfg, dataset_name):
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
 
-@st.cache_resource
 def load_ml_model(m, v, dataset_name):
     """
-    Load ML model and TF-IDF vectorizer from Google Drive.
-    Ensures vectorizer is fitted.
+    Load ML model and TF-IDF vectorizer from Google Drive
+    Without Streamlit caching to avoid NotFittedError in cloud
     """
-    def load_files():
-        model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
-        vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
-        with open(model_file, "rb") as f:
-            model = pickle.load(f)
-        with open(vec_file, "rb") as f:
-            vectorizer = pickle.load(f)
-        return model, vectorizer
+    model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
+    vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
 
-    model, vectorizer = load_files()
+    with open(model_file, "rb") as f:
+        model = pickle.load(f)
+    with open(vec_file, "rb") as f:
+        vectorizer = pickle.load(f)
 
-    # Check if vectorizer is fitted
+    # Ensure vectorizer is fitted
+    from sklearn.utils.validation import check_is_fitted
+    from sklearn.exceptions import NotFittedError
     try:
         check_is_fitted(vectorizer)
     except NotFittedError:
-        st.warning(f"Vectorizer for {dataset_name} not fitted. Re-downloading files...")
-        # Remove local corrupted files
+        st.error(f"Vectorizer for {dataset_name} is not fitted! Redownloading...")
+        # Remove local cached files
         if Path(m).exists(): Path(m).unlink()
         if Path(v).exists(): Path(v).unlink()
-        # Redownload
-        model, vectorizer = load_files()
-        check_is_fitted(vectorizer)
+        # Re-download
+        model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
+        vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
+        with open(model_file, "rb") as f: model = pickle.load(f)
+        with open(vec_file, "rb") as f: vectorizer = pickle.load(f)
 
     return model, vectorizer
+
 
 
 # =========================================================
