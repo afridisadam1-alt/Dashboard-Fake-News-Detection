@@ -14,7 +14,6 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 import altair as alt
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
-import gdown
 import tensorflow as tf
 
 # =========================================================
@@ -28,7 +27,6 @@ print("python-docx:", Document.__module__.split('.')[0], "version not directly a
 print("tensorflow:", tf.__version__)
 print("altair:", alt.__version__)
 print("wordcloud:", WordCloud.__module__.split('.')[0], "version not directly accessible")
-print("gdown:", gdown.__version__)
 
 # =========================================================
 # System cleanup
@@ -43,7 +41,7 @@ st.set_page_config(page_title="Disinformation Detection Dashboard", layout="wide
 MAX_LEN = 700
 
 # =========================================================
-# Dataset configs
+# Dataset configs (local files only)
 # =========================================================
 ml_datasets = {
     "George McIntire": {"model": "pandy_pac.pkl", "vectorizer": "pandy_vectorizer.pkl", "csv": "Pandy-Dataset_sample20.csv", "text_col": "text"},
@@ -105,45 +103,11 @@ def detect_label_column(df, dataset_name):
     return None
 
 # =========================================================
-# Google Drive IDs
-# =========================================================
-GDRIVE_SAMPLE_FILES = {
-    "George McIntire": "Pandy-Dataset_sample20.csv",
-    "EUvsIPF": "EUvsIPF-Dataset_sample20.csv",
-    "EUvsDisinfo": "EUvsDisinfo-Dataset_sample20.csv",
-    "FA-KES": "FA-KES-Dataset_sample20.csv",
-    "ISOT": "ISOT-Dataset_sample20.csv",
-    "EUvsISOT": "1EUvsISOT-Dataset_sample20.csv",
-}
-
-GDRIVE_ML_MODELS = {
-    "George McIntire": {"model": "pandy_vectorizer.pkl", "vectorizer": "pandy_vectorizer.pkl"},
-    "EUvsIPF": {"model": "euvsipf_pac.pkl", "vectorizer": "euvsipf_vectorizer.pkl"},
-    "EUvsDisinfo": {"model": "euvsdisinfo_pac.pkl", "vectorizer": "euvsdisinfo_vectorizer.pkl"},
-}
-
-GDRIVE_DL_MODELS = {
-    "FA-KES": {"model": "FA-KES_bilstm.h5", "tokenizer": "FA-KES_tokenizer.pkl"},
-    "ISOT": {"model": "ISOT_bilstm.h5", "tokenizer": "ISOT_tokenizer.pkl"},
-    "EUvsISOT": {"model": "EUvsISOT_bilstm.h5", "tokenizer": "EUvsISOT_tokenizer.pkl"},
-}
-
-# =========================================================
-# Download from Google Drive
-# =========================================================
-def download_from_gdrive(file_id, filename):
-    if not Path(filename).exists() or Path(filename).stat().st_size == 0:
-        url = f"https://drive.google.com/uc?id={file_id}"
-        gdown.download(url, filename, quiet=False)
-    return filename
-
-# =========================================================
-# Load dataset (cached)
+# Load dataset (local only)
 # =========================================================
 @st.cache_data(show_spinner=False)
 def load_dataset(cfg, dataset_name):
-    file_id = GDRIVE_SAMPLE_FILES[dataset_name]
-    csv_file = download_from_gdrive(file_id, cfg["csv"])
+    csv_file = cfg["csv"]
     df = pd.read_csv(csv_file)
     label_col = detect_label_column(df, dataset_name)
     text_col = cfg["text_col"]
@@ -156,25 +120,21 @@ def load_dataset(cfg, dataset_name):
     return df, label_col
 
 # =========================================================
-# Load ML model (cached)
+# Load ML model (local only)
 # =========================================================
 @st.cache_resource
-def load_ml_model(m, v, dataset_name):
-    model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
-    vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
+def load_ml_model(model_file, vector_file, dataset_name):
     with open(model_file, "rb") as f: model = pickle.load(f)
-    with open(vec_file, "rb") as f: vec = pickle.load(f)
+    with open(vector_file, "rb") as f: vec = pickle.load(f)
     return model, vec
 
 # =========================================================
-# Load DL model (cached)
+# Load DL model (local only)
 # =========================================================
 @st.cache_resource
-def load_dl_model(m, t, dataset_name):
-    model_file = download_from_gdrive(GDRIVE_DL_MODELS[dataset_name]["model"], m)
-    tok_file = download_from_gdrive(GDRIVE_DL_MODELS[dataset_name]["tokenizer"], t)
+def load_dl_model(model_file, tokenizer_file, dataset_name):
     model = load_model(model_file, compile=False)
-    with open(tok_file, "rb") as f: tok = pickle.load(f)
+    with open(tokenizer_file, "rb") as f: tok = pickle.load(f)
     return model, tok
 
 # =========================================================
@@ -226,8 +186,8 @@ def predict(text):
 # Dataset exploration
 # =========================================================
 st.subheader("Dataset Label Distribution")
-df_vc = df[df[label_col].notna()]  # FIXED: define df_vc
-st.dataframe(df_vc[label_col].value_counts().rename("Count"), width='stretch')  # Corrected
+df_vc = df[df[label_col].notna()]
+st.dataframe(df_vc[label_col].value_counts().rename("Count"), width='stretch')
 
 # =========================================================
 # Text search / filter
@@ -252,7 +212,7 @@ edited = st.data_editor(
     df_view,
     hide_index=True,
     disabled=[c for c in df_view.columns if c!="Select"],
-    width='stretch'  # Corrected
+    width='stretch'
 )
 
 selected_rows = edited[edited["Select"]==True]
@@ -304,7 +264,7 @@ if st.button("Predict") and st.session_state.input_text:
                 y=alt.Y("Word:N", sort='-x'),
                 tooltip=["Word","Importance"]
             ).properties(height=400)
-            st.altair_chart(chart)  # Keep 'container' for charts
+            st.altair_chart(chart)
         else:
             st.info("No prominent words detected.")
     else:
