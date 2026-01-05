@@ -305,6 +305,15 @@ if uploaded_file:
 # =========================================================
 st.session_state.input_text = st.text_area("Enter text to predict:", st.session_state.get("input_text",""), height=200)
 
+#checking the vectoriser    
+import pickle
+from sklearn.utils.validation import check_is_fitted
+
+with open("pandy_vectorizer.pkl", "rb") as f:
+    vec = pickle.load(f)
+
+check_is_fitted(vec)  # Should not raise an error
+
 # =========================================================
 # Prediction button
 # =========================================================
@@ -314,18 +323,21 @@ if st.button("Predict") and st.session_state.input_text:
 
     if is_ml:
         st.subheader("📊 Most Important Words (Unigram + Bigram TF-IDF)")
-        X = vectorizer.transform([st.session_state.input_text.lower()])
-        if X.nnz > 0:
-            names = vectorizer.get_feature_names_out()
-            pw = pd.DataFrame({"Word":names[X.indices],"Importance":X.data}).sort_values("Importance",ascending=False).head(20)
-            chart = alt.Chart(pw).mark_bar().encode(
-                x=alt.X("Importance:Q"),
-                y=alt.Y("Word:N", sort='-x'),
-                tooltip=["Word","Importance"]
-            ).properties(height=400)
-            st.altair_chart(chart)  # Keep 'container' for charts
-        else:
-            st.info("No prominent words detected.")
+        try:
+            X = vectorizer.transform([st.session_state.input_text.lower()])
+            if X.nnz > 0:
+                names = vectorizer.get_feature_names_out()
+                pw = pd.DataFrame({"Word": names[X.indices], "Importance": X.data}).sort_values("Importance", ascending=False).head(20)
+                chart = alt.Chart(pw).mark_bar().encode(
+                    x=alt.X("Importance:Q"),
+                    y=alt.Y("Word:N", sort='-x'),
+                    tooltip=["Word", "Importance"]
+                ).properties(height=400)
+                st.altair_chart(chart)
+            else:
+                st.info("No prominent words detected.")
+        except Exception as e:
+            st.info(f"Cannot display top words: {e}")
     else:
         st.subheader("☁️ Word Cloud (Deep Learning Input Text)")
         wc = WordCloud(width=800,height=400,background_color="white",colormap="viridis").generate(st.session_state.input_text)
