@@ -143,7 +143,7 @@ from sklearn.exceptions import NotFittedError
 def load_ml_model(m, v, dataset_name):
     """
     Load ML model and vectorizer from Google Drive.
-    Re-download if vectorizer is not fitted.
+    Ensures vectorizer is fitted; redownloads if needed.
     """
     def load_files():
         model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
@@ -169,20 +169,6 @@ def load_ml_model(m, v, dataset_name):
 
     return model, vectorizer
 
-
-
-
-
-# =========================================================
-# LOAD DL MODEL
-# =========================================================
-@st.cache_resource
-def load_dl_model(m,t,dataset_name):
-    model_file = download_from_gdrive(GDRIVE_DL_MODELS[dataset_name]["model"], m)
-    tok_file = download_from_gdrive(GDRIVE_DL_MODELS[dataset_name]["tokenizer"], t)
-    model = load_model(model_file, compile=False)
-    with open(tok_file,"rb") as f: tokenizer=pickle.load(f)
-    return model, tokenizer
 
 # =========================================================
 # SIDEBAR – MODEL SELECTION
