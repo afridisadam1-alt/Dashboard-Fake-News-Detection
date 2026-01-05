@@ -137,11 +137,7 @@ def load_dataset(cfg, dataset_name):
 # LOAD ML MODEL
 # =========================================================
 def load_ml_model(m, v, dataset_name):
-    """
-    Load ML model and TF-IDF vectorizer from Google Drive
-    Force re-download and avoid stale cached files.
-    """
-    # Delete old files if they exist (to prevent bad cache)
+    # Delete old files if exist (avoid bad cache)
     if Path(m).exists(): Path(m).unlink()
     if Path(v).exists(): Path(v).unlink()
 
@@ -149,15 +145,18 @@ def load_ml_model(m, v, dataset_name):
     model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
     vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
 
-    # Load
-    with open(model_file, "rb") as f: model = pickle.load(f)
-    with open(vec_file, "rb") as f: vectorizer = pickle.load(f)
+    # Load pickle
+    with open(model_file, "rb") as f:
+        model = pickle.load(f)
+    with open(vec_file, "rb") as f:
+        vectorizer = pickle.load(f)
 
-    # Verify vectorizer is fitted
+    # Ensure vectorizer is fitted
     from sklearn.utils.validation import check_is_fitted
-    check_is_fitted(vectorizer)
+    check_is_fitted(vectorizer)  # Will raise early error if broken
 
     return model, vectorizer
+
 
 
 
