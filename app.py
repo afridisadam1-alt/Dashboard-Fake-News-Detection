@@ -140,34 +140,35 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
 
 @st.cache_resource
-def load_ml_model(m,v,dataset_name):
+def load_ml_model(m, v, dataset_name):
     model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
     vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
-    
+
     # Load model
-    with open(model_file,"rb") as f:
+    with open(model_file, "rb") as f:
         model = pickle.load(f)
-    
-    # Load vectorizer and check if fitted
-    with open(vec_file,"rb") as f:
+
+    # Load vectorizer
+    with open(vec_file, "rb") as f:
         vectorizer = pickle.load(f)
-    
-    # Check if fitted
+
+    # Safety check: ensure vectorizer is fitted
     try:
         check_is_fitted(vectorizer)
     except NotFittedError:
-        # Vectorizer is not fitted, re-download both files and reload
-        st.warning(f"Vectorizer for {dataset_name} not fitted. Re-downloading files...")
+        # If not fitted, re-download both model and vectorizer
+        st.warning(f"Vectorizer for {dataset_name} not fitted. Re-downloading...")
         model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
         vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
-        with open(model_file,"rb") as f:
+        with open(model_file, "rb") as f:
             model = pickle.load(f)
-        with open(vec_file,"rb") as f:
+        with open(vec_file, "rb") as f:
             vectorizer = pickle.load(f)
-        # final check
+        # Final check
         check_is_fitted(vectorizer)
-    
+
     return model, vectorizer
+
 
 
 # =========================================================
