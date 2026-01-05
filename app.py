@@ -136,26 +136,16 @@ def load_dataset(cfg, dataset_name):
 # =========================================================
 # LOAD ML MODEL
 # =========================================================
+# remove @st.cache_resource
 def load_ml_model(m, v, dataset_name):
-    # Delete old files if exist (avoid bad cache)
-    if Path(m).exists(): Path(m).unlink()
-    if Path(v).exists(): Path(v).unlink()
-
-    # Download fresh
     model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
     vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
-
-    # Load pickle
     with open(model_file, "rb") as f:
         model = pickle.load(f)
     with open(vec_file, "rb") as f:
         vectorizer = pickle.load(f)
-
-    # Ensure vectorizer is fitted
-    from sklearn.utils.validation import check_is_fitted
-    check_is_fitted(vectorizer)  # Will raise early error if broken
-
     return model, vectorizer
+
 
 
 
