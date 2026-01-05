@@ -140,29 +140,17 @@ def load_dataset(cfg, dataset_name):
 # =========================================================
 # LOAD ML MODEL (fixed for Streamlit Cloud NotFittedError)
 # =========================================================
-def load_ml_model(m, v, dataset_name):
-    """
-    Load ML model and TF-IDF vectorizer fresh every time
-    to avoid NotFittedError on Streamlit Cloud.
-    """
-    # Download model/vectorizer
+# OLD (cached)
+# @st.cache_resource
+# def load_ml_model(m,v,dataset_name):
+#     ...
+
+# NEW (no cache)
+def load_ml_model(m,v,dataset_name):
     model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
     vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
-    
-    # Load model
-    with open(model_file, "rb") as f:
-        model = pickle.load(f)
-    
-    # Load vectorizer
-    with open(vec_file, "rb") as f:
-        vectorizer = pickle.load(f)
-    
-    # Ensure vectorizer is fitted (hack for cloud)
-    if not hasattr(vectorizer, "idf_"):
-        print("Vectorizer not fitted, fitting dynamically on dataset...")
-        df_temp, _ = load_dataset(ml_datasets[dataset_name], dataset_name)
-        vectorizer.fit(df_temp[ml_datasets[dataset_name]["text_col"]])
-    
+    with open(model_file,"rb") as f: model=pickle.load(f)
+    with open(vec_file,"rb") as f: vectorizer=pickle.load(f)
     return model, vectorizer
 
 
@@ -194,8 +182,11 @@ text_col = cfg["text_col"]
 def predict(text):
     clean = clean_text(text)
     if is_ml:
-        # Ensure vectorizer and text match features
         X = vectorizer.transform([clean])
+        # sanity check
+        if X.shape[1] != model.coef_.shape[1]:
+            st.error(f"Feature mismatch: Vectorizer has {X.shape[1]} features, model expects {model.coef_.shape[1]}")
+            return "Error: model/vectorizer mismatch"
         pred = model.predict(X)[0]
         return normalize_prediction(dataset, pred)
     else:
@@ -205,6 +196,7 @@ def predict(text):
         pred_class = 1 if pred_prob>0.5 else 0
         label_map = DL_POSITIVE_LABEL.get(dataset, PRED_LABEL_MAP.get(dataset,{}))
         return label_map.get(pred_class,"Disinformation" if pred_class==1 else "True")
+
 
 # =========================================================
 # DATASET VISUALISATION
