@@ -113,7 +113,7 @@ GDRIVE_DL_MODELS = {
 # =========================================================
 
 def download_from_gdrive(file_id, filename):
-    # Delete any existing file first
+    # Delete old file if exists
     if Path(filename).exists():
         Path(filename).unlink()
     url = f"https://drive.google.com/uc?id={file_id}"
@@ -150,24 +150,21 @@ def load_dataset(cfg, dataset_name):
 #     ...
 
 # NEW (no cache)
-def load_ml_model(m,v,dataset_name):
-    # Force fresh download
-    model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
-    vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
-
-    # Load model
-    with open(model_file,"rb") as f:
+def load_ml_model(model_file, vector_file, dataset_name):
+    model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], model_file)
+    vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], vector_file)
+    
+    with open(model_file, "rb") as f:
         model = pickle.load(f)
-
-    # Load vectorizer
-    with open(vec_file,"rb") as f:
+    with open(vec_file, "rb") as f:
         vectorizer = pickle.load(f)
-
-    # Ensure vectorizer is fitted
+    
+    # Ensure it's fitted
     if not hasattr(vectorizer, "idf_"):
         raise ValueError(f"Vectorizer for {dataset_name} is not fitted. Redownload the correct .pkl")
-
+    
     return model, vectorizer
+
 
 
 
