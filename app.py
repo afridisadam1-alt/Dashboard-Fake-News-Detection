@@ -211,35 +211,16 @@ text_col = cfg["text_col"]
 # =========================================================
 def predict(text):
     clean = re.sub(r"[^\x00-\x7F]+", " ", text).strip()
-
     if is_ml:
-        # Check for empty input
-        if not clean:
-            return "Input text is empty or invalid"
-
-        try:
-            # Transform text using vectorizer
-            X_vec = vectorizer.transform([clean.lower()])
-        except Exception as e:
-            return f"Vectorization failed: {e}"
-
-        try:
-            # Predict using ML model
-            pred = model.predict(X_vec)[0]
-        except Exception as e:
-            return f"Prediction failed: {e}"
-
+        pred = model.predict(vectorizer.transform([clean.lower()]))[0]
         return normalize_prediction(dataset, pred)
-
     else:
-        # DL branch remains unchanged
         seq = tokenizer.texts_to_sequences([clean])
         X = pad_sequences(seq, maxlen=MAX_LEN, padding="post", truncating="post")
         pred_prob = float(model.predict(X, verbose=0)[0][0])
         pred_class = 1 if pred_prob > 0.5 else 0
         label_map = DL_POSITIVE_LABEL.get(dataset, PRED_LABEL_MAP.get(dataset, {}))
         return label_map.get(pred_class, "Disinformation" if pred_class==1 else "True")
-
 
 # =========================================================
 # Dataset exploration
@@ -305,15 +286,6 @@ if uploaded_file:
 # =========================================================
 st.session_state.input_text = st.text_area("Enter text to predict:", st.session_state.get("input_text",""), height=200)
 
-#checking the vectoriser    
-import pickle
-from sklearn.utils.validation import check_is_fitted
-
-with open("pandy_vectorizer.pkl", "rb") as f:
-    vec = pickle.load(f)
-
-check_is_fitted(vec)  # Should not raise an error
-
 # =========================================================
 # Prediction button
 # =========================================================
@@ -323,21 +295,18 @@ if st.button("Predict") and st.session_state.input_text:
 
     if is_ml:
         st.subheader("📊 Most Important Words (Unigram + Bigram TF-IDF)")
-        try:
-            X = vectorizer.transform([st.session_state.input_text.lower()])
-            if X.nnz > 0:
-                names = vectorizer.get_feature_names_out()
-                pw = pd.DataFrame({"Word": names[X.indices], "Importance": X.data}).sort_values("Importance", ascending=False).head(20)
-                chart = alt.Chart(pw).mark_bar().encode(
-                    x=alt.X("Importance:Q"),
-                    y=alt.Y("Word:N", sort='-x'),
-                    tooltip=["Word", "Importance"]
-                ).properties(height=400)
-                st.altair_chart(chart)
-            else:
-                st.info("No prominent words detected.")
-        except Exception as e:
-            st.info(f"Cannot display top words: {e}")
+        X = vectorizer.transform([st.session_state.input_text.lower()])
+        if X.nnz > 0:
+            names = vectorizer.get_feature_names_out()
+            pw = pd.DataFrame({"Word":names[X.indices],"Importance":X.data}).sort_values("Importance",ascending=False).head(20)
+            chart = alt.Chart(pw).mark_bar().encode(
+                x=alt.X("Importance:Q"),
+                y=alt.Y("Word:N", sort='-x'),
+                tooltip=["Word","Importance"]
+            ).properties(height=400)
+            st.altair_chart(chart)  # Keep 'container' for charts
+        else:
+            st.info("No prominent words detected.")
     else:
         st.subheader("☁️ Word Cloud (Deep Learning Input Text)")
         wc = WordCloud(width=800,height=400,background_color="white",colormap="viridis").generate(st.session_state.input_text)
