@@ -211,16 +211,35 @@ text_col = cfg["text_col"]
 # =========================================================
 def predict(text):
     clean = re.sub(r"[^\x00-\x7F]+", " ", text).strip()
+
     if is_ml:
-        pred = model.predict(vectorizer.transform([clean.lower()]))[0]
+        # Check for empty input
+        if not clean:
+            return "Input text is empty or invalid"
+
+        try:
+            # Transform text using vectorizer
+            X_vec = vectorizer.transform([clean.lower()])
+        except Exception as e:
+            return f"Vectorization failed: {e}"
+
+        try:
+            # Predict using ML model
+            pred = model.predict(X_vec)[0]
+        except Exception as e:
+            return f"Prediction failed: {e}"
+
         return normalize_prediction(dataset, pred)
+
     else:
+        # DL branch remains unchanged
         seq = tokenizer.texts_to_sequences([clean])
         X = pad_sequences(seq, maxlen=MAX_LEN, padding="post", truncating="post")
         pred_prob = float(model.predict(X, verbose=0)[0][0])
         pred_class = 1 if pred_prob > 0.5 else 0
         label_map = DL_POSITIVE_LABEL.get(dataset, PRED_LABEL_MAP.get(dataset, {}))
         return label_map.get(pred_class, "Disinformation" if pred_class==1 else "True")
+
 
 # =========================================================
 # Dataset exploration
