@@ -17,7 +17,6 @@ import matplotlib.pyplot as plt
 import gdown
 import tensorflow as tf
 
-
 # =========================================================
 # Check package versions
 # =========================================================
@@ -109,18 +108,18 @@ def detect_label_column(df, dataset_name):
 # Google Drive IDs
 # =========================================================
 GDRIVE_SAMPLE_FILES = {
-    "George McIntire": "1RXnaRJfTUnuYgK1Pi37qUqbhaUtMbii9",
-    "EUvsIPF": "1n0ZBYhWecGo_3ZlvgUcR0TOOLoNG41vC",
-    "EUvsDisinfo": "1u4cpDTEJ-3L7jF5far0IK9kkf7PGZKea",
+    "George McIntire": "Pandy-Dataset_sample20.csv",
+    "EUvsIPF": "EUvsIPF-Dataset_sample20.csv",
+    "EUvsDisinfo": "EUvsDisinfo-Dataset_sample20.csv",
     "FA-KES": "1xYHjkuNGhlmUy1iOMqRXfMXUOwACiSvb",
     "ISOT": "17FCbvF2A12iE6TlHcbT4a5jrHhvIYT8t",
     "EUvsISOT": "1T3COBdd6Co9OnCSwh7_ehOsVVJePGeP-",
 }
 
 GDRIVE_ML_MODELS = {
-    "George McIntire": {"model": "1eoEhR0P-WXOXVGgMBIxiLB2XEit9D6fQ", "vectorizer": "1Im-O9ARU9DntAiHdfN8ZsKwwS3SPrZPM"},
-    "EUvsIPF": {"model": "1lDV23rhEL5X9bkBKCoQB-ShjwtOSN8pX", "vectorizer": "1k7oAtqcD7AJ1WwmGpmHMsHQ3zjC2OxlT"},
-    "EUvsDisinfo": {"model": "1SnfQVPoSM9SiNgOfJ7AoYdDZEjySzmxS", "vectorizer": "1lFMmiigHiDbZi70u1Rcb2-bIpQxkSPsD"},
+    "George McIntire": {"model": "pandy_vectorizer.pkl", "vectorizer": "pandy_vectorizer.pkl"},
+    "EUvsIPF": {"model": "euvsipf_pac.pkl", "vectorizer": "euvsipf_vectorizer.pkl"},
+    "EUvsDisinfo": {"model": "euvsdisinfo_pac.pkl", "vectorizer": "euvsdisinfo_vectorizer.pkl"},
 }
 
 GDRIVE_DL_MODELS = {
@@ -159,32 +158,12 @@ def load_dataset(cfg, dataset_name):
 # =========================================================
 # Load ML model (cached)
 # =========================================================
-from sklearn.utils.validation import check_is_fitted
-
 @st.cache_resource
 def load_ml_model(m, v, dataset_name):
-    """
-    Load ML model and vectorizer directly from Google Drive.
-    Raises clear error if vectorizer is not fitted.
-    """
-    # Download files if not exists
     model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
-    vec_file   = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
-
-    # Load model
+    vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
     with open(model_file, "rb") as f: model = pickle.load(f)
-
-    # Load vectorizer
     with open(vec_file, "rb") as f: vec = pickle.load(f)
-
-    # Safety check: ensure vectorizer is fitted
-    try:
-        check_is_fitted(vec)
-    except Exception as e:
-        raise RuntimeError(
-            f"Vectorizer for dataset {dataset_name} is not fitted or corrupted: {e}"
-        )
-
     return model, vec
 
 # =========================================================
@@ -233,11 +212,8 @@ text_col = cfg["text_col"]
 def predict(text):
     clean = re.sub(r"[^\x00-\x7F]+", " ", text).strip()
     if is_ml:
-        try:
-            pred = model.predict(vectorizer.transform([clean.lower()]))[0]
-            return normalize_prediction(dataset, pred)
-        except Exception as e:
-            return f"Vectorization failed: {str(e)}"
+        pred = model.predict(vectorizer.transform([clean.lower()]))[0]
+        return normalize_prediction(dataset, pred)
     else:
         seq = tokenizer.texts_to_sequences([clean])
         X = pad_sequences(seq, maxlen=MAX_LEN, padding="post", truncating="post")
@@ -319,22 +295,18 @@ if st.button("Predict") and st.session_state.input_text:
 
     if is_ml:
         st.subheader("📊 Most Important Words (Unigram + Bigram TF-IDF)")
-        try:
-            X = vectorizer.transform([st.session_state.input_text.lower()])
-            if X.nnz > 0:
-                names = vectorizer.get_feature_names_out()
-                pw = pd.DataFrame({"Word": names[X.indices], "Importance": X.data}) \
-                    .sort_values("Importance", ascending=False).head(20)
-                chart = alt.Chart(pw).mark_bar().encode(
-                    x=alt.X("Importance:Q"),
-                    y=alt.Y("Word:N", sort='-x'),
-                    tooltip=["Word", "Importance"]
-                ).properties(height=400)
-                st.altair_chart(chart)
-            else:
-                st.info("No prominent words detected.")
-        except Exception as e:
-            st.info(f"Cannot display top words: {str(e)}")
+        X = vectorizer.transform([st.session_state.input_text.lower()])
+        if X.nnz > 0:
+            names = vectorizer.get_feature_names_out()
+            pw = pd.DataFrame({"Word":names[X.indices],"Importance":X.data}).sort_values("Importance",ascending=False).head(20)
+            chart = alt.Chart(pw).mark_bar().encode(
+                x=alt.X("Importance:Q"),
+                y=alt.Y("Word:N", sort='-x'),
+                tooltip=["Word","Importance"]
+            ).properties(height=400)
+            st.altair_chart(chart)  # Keep 'container' for charts
+        else:
+            st.info("No prominent words detected.")
     else:
         st.subheader("☁️ Word Cloud (Deep Learning Input Text)")
         wc = WordCloud(width=800,height=400,background_color="white",colormap="viridis").generate(st.session_state.input_text)
