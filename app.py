@@ -17,21 +17,6 @@ import matplotlib.pyplot as plt
 import gdown
 import tensorflow as tf
 
-#importing .pkl files from local directory for ml
-import pickle
-from sklearn.utils.validation import check_is_fitted
-
-files = ["pandy_vectorizer.pkl", "euvsipf_vectorizer.pkl", "euvsdisinfo_vectorizer.pkl"]
-
-for f in files:
-    with open(f, "rb") as file:
-        vec = pickle.load(file)
-    try:
-        check_is_fitted(vec)
-        print(f"{f} is fitted ✅")
-    except Exception as e:
-        print(f"{f} is NOT fitted ❌: {e}")
-
 
 # =========================================================
 # Check package versions
@@ -174,12 +159,32 @@ def load_dataset(cfg, dataset_name):
 # =========================================================
 # Load ML model (cached)
 # =========================================================
+from sklearn.utils.validation import check_is_fitted
+
 @st.cache_resource
 def load_ml_model(m, v, dataset_name):
+    """
+    Load ML model and vectorizer directly from Google Drive.
+    Raises clear error if vectorizer is not fitted.
+    """
+    # Download files if not exists
     model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
-    vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
+    vec_file   = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
+
+    # Load model
     with open(model_file, "rb") as f: model = pickle.load(f)
+
+    # Load vectorizer
     with open(vec_file, "rb") as f: vec = pickle.load(f)
+
+    # Safety check: ensure vectorizer is fitted
+    try:
+        check_is_fitted(vec)
+    except Exception as e:
+        raise RuntimeError(
+            f"Vectorizer for dataset {dataset_name} is not fitted or corrupted: {e}"
+        )
+
     return model, vec
 
 # =========================================================
@@ -228,8 +233,11 @@ text_col = cfg["text_col"]
 def predict(text):
     clean = re.sub(r"[^\x00-\x7F]+", " ", text).strip()
     if is_ml:
-        pred = model.predict(vectorizer.transform([clean.lower()]))[0]
-        return normalize_prediction(dataset, pred)
+        try:
+            pred = model.predict(vectorizer.transform([clean.lower()]))[0]
+            return normalize_prediction(dataset, pred)
+        except Exception as e:
+            return f"Vectorization failed: {str(e)}"
     else:
         seq = tokenizer.texts_to_sequences([clean])
         X = pad_sequences(seq, maxlen=MAX_LEN, padding="post", truncating="post")
@@ -311,18 +319,22 @@ if st.button("Predict") and st.session_state.input_text:
 
     if is_ml:
         st.subheader("📊 Most Important Words (Unigram + Bigram TF-IDF)")
-        X = vectorizer.transform([st.session_state.input_text.lower()])
-        if X.nnz > 0:
-            names = vectorizer.get_feature_names_out()
-            pw = pd.DataFrame({"Word":names[X.indices],"Importance":X.data}).sort_values("Importance",ascending=False).head(20)
-            chart = alt.Chart(pw).mark_bar().encode(
-                x=alt.X("Importance:Q"),
-                y=alt.Y("Word:N", sort='-x'),
-                tooltip=["Word","Importance"]
-            ).properties(height=400)
-            st.altair_chart(chart)  # Keep 'container' for charts
-        else:
-            st.info("No prominent words detected.")
+        try:
+            X = vectorizer.transform([st.session_state.input_text.lower()])
+            if X.nnz > 0:
+                names = vectorizer.get_feature_names_out()
+                pw = pd.DataFrame({"Word": names[X.indices], "Importance": X.data}) \
+                    .sort_values("Importance", ascending=False).head(20)
+                chart = alt.Chart(pw).mark_bar().encode(
+                    x=alt.X("Importance:Q"),
+                    y=alt.Y("Word:N", sort='-x'),
+                    tooltip=["Word", "Importance"]
+                ).properties(height=400)
+                st.altair_chart(chart)
+            else:
+                st.info("No prominent words detected.")
+        except Exception as e:
+            st.info(f"Cannot display top words: {str(e)}")
     else:
         st.subheader("☁️ Word Cloud (Deep Learning Input Text)")
         wc = WordCloud(width=800,height=400,background_color="white",colormap="viridis").generate(st.session_state.input_text)
