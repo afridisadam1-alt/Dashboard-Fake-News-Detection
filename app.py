@@ -1,33 +1,49 @@
 # =========================================================
-# app.py – Disinformation Detection Dashboard (ML + DL)
+# app.py – Disinformation Detection Dashboard (DL + ML Cached, Toolbar Hidden)
 # =========================================================
 
 import os, warnings, pickle, re
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import altair as alt
 from pathlib import Path
-from wordcloud import WordCloud
 from PyPDF2 import PdfReader
 from docx import Document
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-import tensorflow as tf
+import altair as alt
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
 import gdown
+import tensorflow as tf
 
 # =========================================================
-# SYSTEM SETTINGS
+# Check package versions
+# =========================================================
+print("streamlit:", st.__version__)
+print("pandas:", pd.__version__)
+print("numpy:", np.__version__)
+print("PyPDF2:", PdfReader.__module__.split('.')[0], "version not directly accessible")
+print("python-docx:", Document.__module__.split('.')[0], "version not directly accessible")
+print("tensorflow:", tf.__version__)
+print("altair:", alt.__version__)
+print("wordcloud:", WordCloud.__module__.split('.')[0], "version not directly accessible")
+print("gdown:", gdown.__version__)
+
+# =========================================================
+# System cleanup
 # =========================================================
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 warnings.filterwarnings("ignore")
 st.set_page_config(page_title="Disinformation Detection Dashboard", layout="wide")
 
+# =========================================================
+# Constants
+# =========================================================
 MAX_LEN = 700
 
 # =========================================================
-# DATASET CONFIGS
+# Dataset configs
 # =========================================================
 ml_datasets = {
     "George McIntire": {"model": "pandy_pac.pkl", "vectorizer": "pandy_vectorizer.pkl", "csv": "Pandy-Dataset_sample20.csv", "text_col": "text"},
@@ -42,24 +58,30 @@ dl_datasets = {
 }
 
 # =========================================================
-# PREDICTION LABEL MAP
+# Prediction label mapping
 # =========================================================
 PRED_LABEL_MAP = {
     "FA-KES": {0: "TRUE", 1: "Fake"},
     "ISOT": {0: "True", 1: "Fake"},
-    "EUvsISOT": {0: "True", 1: "Disinformation"},
+    "EUvsISOT": {0: "True", 1: "disinformation"},
     "George McIntire": {0: "REAL", 1: "FAKE"},
-    "EUvsIPF": {0: "True", 1: "Disinformation"},
-    "EUvsDisinfo": {0: "Support", 1: "Disinformation"},
+    "EUvsIPF": {0: "true", 1: "disinformation"},
+    "EUvsDisinfo": {0: "support", 1: "disinformation"},
 }
 
-DL_POSITIVE_LABEL = {k: v for k,v in PRED_LABEL_MAP.items() if k in dl_datasets}
+DL_POSITIVE_LABEL = {
+    "FA-KES": PRED_LABEL_MAP["FA-KES"],
+    "ISOT": PRED_LABEL_MAP["ISOT"],
+    "EUvsISOT": PRED_LABEL_MAP["EUvsISOT"],
+}
 
 # =========================================================
-# UTILS
+# Label normalization
 # =========================================================
 def normalize_prediction(dataset_name, pred_label):
     map_ = PRED_LABEL_MAP.get(dataset_name, {})
+    if isinstance(pred_label, str) and pred_label.isdigit():
+        pred_label = int(pred_label)
     mapped = map_.get(pred_label, pred_label)
     mapped_lower = str(mapped).strip().lower()
     if mapped_lower in ["true", "real", "support", "0"]:
@@ -70,6 +92,9 @@ def normalize_prediction(dataset_name, pred_label):
         return "Disinformation"
     return str(mapped)
 
+# =========================================================
+# Detect label column
+# =========================================================
 def detect_label_column(df, dataset_name):
     if dataset_name == "FA-KES": return "labels"
     elif dataset_name == "ISOT": return "label"
@@ -79,13 +104,8 @@ def detect_label_column(df, dataset_name):
             if col in df.columns: return col
     return None
 
-def clean_text(text):
-    text = re.sub(r"[^\x00-\x7F]+"," ", text)
-    text = re.sub(r"\s+"," ", text).strip()
-    return text.lower()
-
 # =========================================================
-# GOOGLE DRIVE FILES
+# Google Drive IDs
 # =========================================================
 GDRIVE_SAMPLE_FILES = {
     "George McIntire": "1RXnaRJfTUnuYgK1Pi37qUqbhaUtMbii9",
@@ -109,137 +129,138 @@ GDRIVE_DL_MODELS = {
 }
 
 # =========================================================
-# DOWNLOAD FROM DRIVE
+# Download from Google Drive
 # =========================================================
-
 def download_from_gdrive(file_id, filename):
-    # Delete old file if exists
-    if Path(filename).exists():
-        Path(filename).unlink()
-    url = f"https://drive.google.com/uc?id={file_id}"
-    gdown.download(url, filename, quiet=False)
+    if not Path(filename).exists() or Path(filename).stat().st_size == 0:
+        url = f"https://drive.google.com/uc?id={file_id}"
+        gdown.download(url, filename, quiet=False)
     return filename
 
-
 # =========================================================
-# LOAD DATASET
+# Load dataset (cached)
 # =========================================================
 @st.cache_data(show_spinner=False)
 def load_dataset(cfg, dataset_name):
-    csv_file = download_from_gdrive(GDRIVE_SAMPLE_FILES[dataset_name], cfg["csv"])
+    file_id = GDRIVE_SAMPLE_FILES[dataset_name]
+    csv_file = download_from_gdrive(file_id, cfg["csv"])
     df = pd.read_csv(csv_file)
     label_col = detect_label_column(df, dataset_name)
     text_col = cfg["text_col"]
-    df[label_col] = df[label_col].astype(str).str.strip()
-    df[text_col] = df[text_col].astype(str).str.strip()
-    df = df[df[text_col]!=""]
-    df = df[[text_col,label_col]].copy()
+    df[label_col] = pd.Series(df[label_col], dtype=str).str.strip()
+    df[text_col] = pd.Series(df[text_col], dtype=str).str.strip()
+    df = df[~df[label_col].isin(["", "nan", "NaN"])]
+    df = df[df[text_col] != ""]
+    df = df[[text_col, label_col]].copy()
     df["Select"] = False
     return df, label_col
 
 # =========================================================
-# LOAD ML MODEL
+# Load ML model (cached)
 # =========================================================
-# remove @st.cache_resource
-# =========================================================
-# LOAD ML MODEL (fixed for Streamlit Cloud NotFittedError)
-# =========================================================
-# OLD (cached)
-# @st.cache_resource
-# def load_ml_model(m,v,dataset_name):
-#     ...
-
-# NEW (no cache)
-def load_ml_model(model_file, vector_file, dataset_name):
-    model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], model_file)
-    vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], vector_file)
-    
-    with open(model_file, "rb") as f:
-        model = pickle.load(f)
-    with open(vec_file, "rb") as f:
-        vectorizer = pickle.load(f)
-    
-    # Ensure it's fitted
-    if not hasattr(vectorizer, "idf_"):
-        raise ValueError(f"Vectorizer for {dataset_name} is not fitted. Redownload the correct .pkl")
-    
-    return model, vectorizer
-
-
-
-
-
-
-
+@st.cache_resource
+def load_ml_model(m, v, dataset_name):
+    model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
+    vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
+    with open(model_file, "rb") as f: model = pickle.load(f)
+    with open(vec_file, "rb") as f: vec = pickle.load(f)
+    return model, vec
 
 # =========================================================
-# SIDEBAR – MODEL SELECTION
+# Load DL model (cached)
+# =========================================================
+@st.cache_resource
+def load_dl_model(m, t, dataset_name):
+    model_file = download_from_gdrive(GDRIVE_DL_MODELS[dataset_name]["model"], m)
+    tok_file = download_from_gdrive(GDRIVE_DL_MODELS[dataset_name]["tokenizer"], t)
+    model = load_model(model_file, compile=False)
+    with open(tok_file, "rb") as f: tok = pickle.load(f)
+    return model, tok
+
+# =========================================================
+# Hide download button / toolbar
+# =========================================================
+st.markdown("""
+    <style>
+        [data-testid="stElementToolbar"] {display: none !important;}
+        [data-testid="stDataFrameToolbar"] {display: none !important;}
+    </style>
+""", unsafe_allow_html=True)
+
+# =========================================================
+# Sidebar – model selection
 # =========================================================
 st.sidebar.title("Model Selection")
-model_type = st.sidebar.radio("Select Model Type:", ["ML (Traditional)","DL (BiLSTM)"])
-if model_type=="ML (Traditional)":
+model_type = st.sidebar.radio("Select Model Type:", ["ML (Traditional)", "DL (BiLSTM)"])
+if model_type == "ML (Traditional)":
     dataset = st.sidebar.selectbox("Select Dataset", list(ml_datasets))
     cfg = ml_datasets[dataset]
     model, vectorizer = load_ml_model(cfg["model"], cfg["vectorizer"], dataset)
-    is_ml=True
+    is_ml = True
 else:
     dataset = st.sidebar.selectbox("Select Dataset", list(dl_datasets))
     cfg = dl_datasets[dataset]
     model, tokenizer = load_dl_model(cfg["model"], cfg["tokenizer"], dataset)
-    is_ml=False
+    is_ml = False
 
 df, label_col = load_dataset(cfg, dataset)
 text_col = cfg["text_col"]
 
 # =========================================================
-# PREDICTION FUNCTION
+# Prediction function
 # =========================================================
 def predict(text):
-    clean = clean_text(text)
+    clean = re.sub(r"[^\x00-\x7F]+", " ", text).strip()
     if is_ml:
-        X = vectorizer.transform([clean])
-        # sanity check
-        if X.shape[1] != model.coef_.shape[1]:
-            st.error(f"Feature mismatch: Vectorizer has {X.shape[1]} features, model expects {model.coef_.shape[1]}")
-            return "Error: model/vectorizer mismatch"
-        pred = model.predict(X)[0]
+        pred = model.predict(vectorizer.transform([clean.lower()]))[0]
         return normalize_prediction(dataset, pred)
     else:
         seq = tokenizer.texts_to_sequences([clean])
-        X_pad = pad_sequences(seq, maxlen=MAX_LEN, padding="post", truncating="post")
-        pred_prob = float(model.predict(X_pad, verbose=0)[0][0])
-        pred_class = 1 if pred_prob>0.5 else 0
-        label_map = DL_POSITIVE_LABEL.get(dataset, PRED_LABEL_MAP.get(dataset,{}))
-        return label_map.get(pred_class,"Disinformation" if pred_class==1 else "True")
-
+        X = pad_sequences(seq, maxlen=MAX_LEN, padding="post", truncating="post")
+        pred_prob = float(model.predict(X, verbose=0)[0][0])
+        pred_class = 1 if pred_prob > 0.5 else 0
+        label_map = DL_POSITIVE_LABEL.get(dataset, PRED_LABEL_MAP.get(dataset, {}))
+        return label_map.get(pred_class, "Disinformation" if pred_class==1 else "True")
 
 # =========================================================
-# DATASET VISUALISATION
+# Dataset exploration
 # =========================================================
 st.subheader("Dataset Label Distribution")
-df_vc = df[df[label_col].notna()]
-st.dataframe(df_vc[label_col].value_counts().rename("Count"), width='stretch')
+df_vc = df[df[label_col].notna()]  # FIXED: define df_vc
+st.dataframe(df_vc[label_col].value_counts().rename("Count"), width='stretch')  # Corrected
 
+# =========================================================
+# Text search / filter
+# =========================================================
 valid_labels = [l for l in df[label_col].unique() if str(l).strip().lower() not in ["","nan"]]
-labels = ["All"]+sorted(valid_labels)
+labels = ["All"] + sorted(valid_labels)
 label_filter = st.radio("Filter by label:", labels, horizontal=True)
 df_f = df if label_filter=="All" else df[df[label_col]==label_filter]
 df_f = df_f[df_f[label_col].notna()]
-df_f.reset_index(drop=True,inplace=True)
+df_f.reset_index(drop=True, inplace=True)
 
 search_query = st.text_input("Search in text column:")
 if search_query:
     df_f = df_f[df_f[text_col].str.contains(search_query, case=False, na=False)]
     df_f.reset_index(drop=True, inplace=True)
 
+# =========================================================
+# Dataset view / data editor
+# =========================================================
 df_view = df_f.groupby(label_col, group_keys=False).head(10) if label_filter=="All" else df_f.head(20)
-edited = st.data_editor(df_view, hide_index=True, disabled=[c for c in df_view.columns if c!="Select"], width='stretch')
+edited = st.data_editor(
+    df_view,
+    hide_index=True,
+    disabled=[c for c in df_view.columns if c!="Select"],
+    width='stretch'  # Corrected
+)
+
 selected_rows = edited[edited["Select"]==True]
 if not selected_rows.empty:
     st.session_state.input_text = selected_rows.iloc[0][text_col]
 
 # =========================================================
-# FILE UPLOADER
+# File uploader
 # =========================================================
 uploaded_file = st.file_uploader("Upload a file (txt, pdf, docx, csv, xlsx)", type=["txt","pdf","docx","csv","xlsx"])
 if uploaded_file:
@@ -260,27 +281,30 @@ if uploaded_file:
     except Exception as e:
         st.error(f"Failed to read file: {e}")
 
+# =========================================================
+# Text area
+# =========================================================
 st.session_state.input_text = st.text_area("Enter text to predict:", st.session_state.get("input_text",""), height=200)
 
 # =========================================================
-# PREDICTION BUTTON & VISUALISATION
+# Prediction button
 # =========================================================
 if st.button("Predict") and st.session_state.input_text:
     label = predict(st.session_state.input_text)
     st.success(f"Prediction ({dataset}): {label}")
 
     if is_ml:
-        st.subheader("📊 Most Important Words (TF-IDF)")
+        st.subheader("📊 Most Important Words (Unigram + Bigram TF-IDF)")
         X = vectorizer.transform([st.session_state.input_text.lower()])
-        if X.nnz>0:
+        if X.nnz > 0:
             names = vectorizer.get_feature_names_out()
             pw = pd.DataFrame({"Word":names[X.indices],"Importance":X.data}).sort_values("Importance",ascending=False).head(20)
             chart = alt.Chart(pw).mark_bar().encode(
                 x=alt.X("Importance:Q"),
-                y=alt.Y("Word:N",sort='-x'),
+                y=alt.Y("Word:N", sort='-x'),
                 tooltip=["Word","Importance"]
             ).properties(height=400)
-            st.altair_chart(chart)
+            st.altair_chart(chart)  # Keep 'container' for charts
         else:
             st.info("No prominent words detected.")
     else:
