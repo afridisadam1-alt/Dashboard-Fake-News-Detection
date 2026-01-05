@@ -142,8 +142,8 @@ from sklearn.exceptions import NotFittedError
 @st.cache_resource
 def load_ml_model(m, v, dataset_name):
     """
-    Load ML model and vectorizer from Google Drive.
-    Ensures vectorizer is fitted; redownloads if needed.
+    Load ML model and TF-IDF vectorizer from Google Drive.
+    Ensures vectorizer is fitted.
     """
     def load_files():
         model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
@@ -161,11 +161,12 @@ def load_ml_model(m, v, dataset_name):
         check_is_fitted(vectorizer)
     except NotFittedError:
         st.warning(f"Vectorizer for {dataset_name} not fitted. Re-downloading files...")
-        # Delete local files to force fresh download
+        # Remove local corrupted files
         if Path(m).exists(): Path(m).unlink()
         if Path(v).exists(): Path(v).unlink()
+        # Redownload
         model, vectorizer = load_files()
-        check_is_fitted(vectorizer)  # final check
+        check_is_fitted(vectorizer)
 
     return model, vectorizer
 
