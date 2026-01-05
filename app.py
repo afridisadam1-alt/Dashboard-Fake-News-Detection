@@ -137,13 +137,32 @@ def load_dataset(cfg, dataset_name):
 # LOAD ML MODEL
 # =========================================================
 # remove @st.cache_resource
+# =========================================================
+# LOAD ML MODEL (fixed for Streamlit Cloud NotFittedError)
+# =========================================================
 def load_ml_model(m, v, dataset_name):
+    """
+    Load ML model and TF-IDF vectorizer fresh every time
+    to avoid NotFittedError on Streamlit Cloud.
+    """
+    # Download model/vectorizer
     model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
     vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
+    
+    # Load model
     with open(model_file, "rb") as f:
         model = pickle.load(f)
+    
+    # Load vectorizer
     with open(vec_file, "rb") as f:
         vectorizer = pickle.load(f)
+    
+    # Ensure vectorizer is fitted (hack for cloud)
+    if not hasattr(vectorizer, "idf_"):
+        print("Vectorizer not fitted, fitting dynamically on dataset...")
+        df_temp, _ = load_dataset(ml_datasets[dataset_name], dataset_name)
+        vectorizer.fit(df_temp[ml_datasets[dataset_name]["text_col"]])
+    
     return model, vectorizer
 
 
