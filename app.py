@@ -136,37 +136,26 @@ def load_dataset(cfg, dataset_name):
 # =========================================================
 # LOAD ML MODEL
 # =========================================================
-from sklearn.utils.validation import check_is_fitted
-from sklearn.exceptions import NotFittedError
-
 def load_ml_model(m, v, dataset_name):
     """
     Load ML model and TF-IDF vectorizer from Google Drive
-    Without Streamlit caching to avoid NotFittedError in cloud
+    Force re-download and avoid stale cached files.
     """
+    # Delete old files if they exist (to prevent bad cache)
+    if Path(m).exists(): Path(m).unlink()
+    if Path(v).exists(): Path(v).unlink()
+
+    # Download fresh
     model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
     vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
 
-    with open(model_file, "rb") as f:
-        model = pickle.load(f)
-    with open(vec_file, "rb") as f:
-        vectorizer = pickle.load(f)
+    # Load
+    with open(model_file, "rb") as f: model = pickle.load(f)
+    with open(vec_file, "rb") as f: vectorizer = pickle.load(f)
 
-    # Ensure vectorizer is fitted
+    # Verify vectorizer is fitted
     from sklearn.utils.validation import check_is_fitted
-    from sklearn.exceptions import NotFittedError
-    try:
-        check_is_fitted(vectorizer)
-    except NotFittedError:
-        st.error(f"Vectorizer for {dataset_name} is not fitted! Redownloading...")
-        # Remove local cached files
-        if Path(m).exists(): Path(m).unlink()
-        if Path(v).exists(): Path(v).unlink()
-        # Re-download
-        model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
-        vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
-        with open(model_file, "rb") as f: model = pickle.load(f)
-        with open(vec_file, "rb") as f: vectorizer = pickle.load(f)
+    check_is_fitted(vectorizer)
 
     return model, vectorizer
 
