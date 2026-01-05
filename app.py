@@ -141,33 +141,34 @@ from sklearn.exceptions import NotFittedError
 
 @st.cache_resource
 def load_ml_model(m, v, dataset_name):
-    model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
-    vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
-
-    # Load model
-    with open(model_file, "rb") as f:
-        model = pickle.load(f)
-
-    # Load vectorizer
-    with open(vec_file, "rb") as f:
-        vectorizer = pickle.load(f)
-
-    # Safety check: ensure vectorizer is fitted
-    try:
-        check_is_fitted(vectorizer)
-    except NotFittedError:
-        # If not fitted, re-download both model and vectorizer
-        st.warning(f"Vectorizer for {dataset_name} not fitted. Re-downloading...")
+    """
+    Load ML model and vectorizer from Google Drive.
+    Force re-download if vectorizer is not fitted.
+    """
+    def load_files():
         model_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["model"], m)
         vec_file = download_from_gdrive(GDRIVE_ML_MODELS[dataset_name]["vectorizer"], v)
         with open(model_file, "rb") as f:
             model = pickle.load(f)
         with open(vec_file, "rb") as f:
             vectorizer = pickle.load(f)
-        # Final check
+        return model, vectorizer
+
+    model, vectorizer = load_files()
+
+    # Check if vectorizer is fitted
+    try:
         check_is_fitted(vectorizer)
+    except NotFittedError:
+        st.warning(f"Vectorizer for {dataset_name} not fitted. Re-downloading files...")
+        # Delete local cached files to force re-download
+        if Path(m).exists(): Path(m).unlink()
+        if Path(v).exists(): Path(v).unlink()
+        model, vectorizer = load_files()
+        check_is_fitted(vectorizer)  # Final check
 
     return model, vectorizer
+
 
 
 
