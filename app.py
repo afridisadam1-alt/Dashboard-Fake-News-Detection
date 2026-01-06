@@ -41,6 +41,17 @@ st.set_page_config(page_title="Disinformation Detection Dashboard", layout="wide
 MAX_LEN = 700
 
 # =========================================================
+# Text cleaning function
+# =========================================================
+def clean_text(text):
+    """
+    Removes special/garbled characters and extra whitespace
+    """
+    text = re.sub(r"[^\x00-\x7F]+", " ", text)  # remove non-ASCII
+    text = re.sub(r"\s+", " ", text)            # collapse multiple spaces
+    return text.strip()
+
+# =========================================================
 # Dataset configs (local files only)
 # =========================================================
 ml_datasets = {
@@ -113,6 +124,7 @@ def load_dataset(cfg, dataset_name):
     text_col = cfg["text_col"]
     df[label_col] = pd.Series(df[label_col], dtype=str).str.strip()
     df[text_col] = pd.Series(df[text_col], dtype=str).str.strip()
+    df[text_col] = df[text_col].apply(clean_text)  # <-- clean dataset text
     df = df[~df[label_col].isin(["", "nan", "NaN"])]
     df = df[df[text_col] != ""]
     df = df[[text_col, label_col]].copy()
@@ -170,7 +182,7 @@ text_col = cfg["text_col"]
 # Prediction function
 # =========================================================
 def predict(text):
-    clean = re.sub(r"[^\x00-\x7F]+", " ", text).strip()
+    clean = clean_text(text)  # <-- clean input text
     if is_ml:
         pred = model.predict(vectorizer.transform([clean.lower()]))[0]
         return normalize_prediction(dataset, pred)
@@ -227,17 +239,21 @@ if uploaded_file:
     ext = uploaded_file.name.split(".")[-1].lower()
     try:
         if ext=="pdf":
-            reader=PdfReader(uploaded_file)
-            st.session_state.input_text="\n".join(p.extract_text() for p in reader.pages if p.extract_text())
+            reader = PdfReader(uploaded_file)
+            text = "\n".join(p.extract_text() for p in reader.pages if p.extract_text())
+            st.session_state.input_text = clean_text(text)
         elif ext=="docx":
-            doc=Document(uploaded_file)
-            st.session_state.input_text="\n".join(p.text for p in doc.paragraphs)
+            doc = Document(uploaded_file)
+            text = "\n".join(p.text for p in doc.paragraphs)
+            st.session_state.input_text = clean_text(text)
         elif ext in ["txt","csv"]:
-            st.session_state.input_text = uploaded_file.read().decode("utf-8",errors="ignore")
+            text = uploaded_file.read().decode("utf-8",errors="ignore")
+            st.session_state.input_text = clean_text(text)
         elif ext=="xlsx":
             df_file = pd.read_excel(uploaded_file)
             text_cols = [c for c in df_file.columns if df_file[c].dtype==object]
-            st.session_state.input_text = "\n".join(df_file[col].astype(str).str.cat(sep="\n") for col in text_cols)
+            text = "\n".join(df_file[col].astype(str).str.cat(sep="\n") for col in text_cols)
+            st.session_state.input_text = clean_text(text)
     except Exception as e:
         st.error(f"Failed to read file: {e}")
 
