@@ -271,13 +271,44 @@ st.session_state.input_text = st.text_area("Enter text to predict:", st.session_
 # =========================================================
 # Prediction button with zoom animation and color
 # =========================================================
-if st.button("Predict") and st.session_state.input_text:
+# =========================================================
+# Dynamic color Predict button
+# =========================================================
+# Default color before prediction
+button_color = "#4CAF50"  # green
+
+# Create a placeholder for the button
+button_placeholder = st.empty()
+
+# Render button inside placeholder
+if button_placeholder.button("Predict", key="predict_btn"):
+    # Run prediction
     label = predict(st.session_state.input_text)
-    
-    # Set color: red for Fake/Disinformation, green otherwise
-    color = "red" if label.lower() in ["fake", "disinformation"] else "green"
-    
-    # HTML + CSS for zoom animation
+
+    # Decide color based on label
+    if label.lower() in ["fake", "disinformation"]:
+        button_color = "#FF4B4B"  # red
+    else:
+        button_color = "#4CAF50"  # green
+
+    # Update button style dynamically via st.markdown
+    st.markdown(f"""
+    <style>
+    div.stButton > button:first-child {{
+        background-color: {button_color};
+        color: white;
+        font-size: 24px;
+        padding: 12px 0px;
+        border-radius: 8px;
+        font-weight: bold;
+    }}
+    div.stButton > button:first-child:hover {{
+        background-color: {'#d43f3f' if button_color=='#FF4B4B' else '#45a049'};
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Show animated prediction label below
     html_code = f"""
     <style>
     @keyframes zoomIn {{
@@ -286,7 +317,7 @@ if st.button("Predict") and st.session_state.input_text:
         100% {{ transform: scale(1); opacity: 1; }}
     }}
     .zoom-label {{
-        color: {color};
+        color: {button_color};
         font-weight: bold;
         font-size: 28px;
         animation: zoomIn 0.6s ease-out;
@@ -294,28 +325,6 @@ if st.button("Predict") and st.session_state.input_text:
     </style>
     <div class="zoom-label">Prediction ({dataset}): {label}</div>
     """
-    
     st.markdown(html_code, unsafe_allow_html=True)
 
-    # Continue with ML or DL visualization
-    if is_ml:
-        st.subheader("📊 Most Important Words (Unigram + Bigram TF-IDF)")
-        X = vectorizer.transform([st.session_state.input_text.lower()])
-        if X.nnz > 0:
-            names = vectorizer.get_feature_names_out()
-            pw = pd.DataFrame({"Word":names[X.indices],"Importance":X.data}).sort_values("Importance",ascending=False).head(20)
-            chart = alt.Chart(pw).mark_bar().encode(
-                x=alt.X("Importance:Q"),
-                y=alt.Y("Word:N", sort='-x'),
-                tooltip=["Word","Importance"]
-            ).properties(height=400)
-            st.altair_chart(chart)
-        else:
-            st.info("No prominent words detected.")
-    else:
-        st.subheader("☁️ Word Cloud (Deep Learning Input Text)")
-        wc = WordCloud(width=800,height=400,background_color="white",colormap="viridis").generate(st.session_state.input_text)
-        fig, ax = plt.subplots(figsize=(10,5))
-        ax.imshow(wc.to_image())
-        ax.axis("off")
-        st.pyplot(fig)
+    # Continue with ML or DL visualizations...
