@@ -16,11 +16,6 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import tensorflow as tf
 
-
-import sklearn
-st.write("scikit-learn version:", sklearn.__version__)
-
-
 # =========================================================
 # Check package versions
 # =========================================================
@@ -32,7 +27,7 @@ print("python-docx:", Document.__module__.split('.')[0], "version not directly a
 print("tensorflow:", tf.__version__)
 print("altair:", alt.__version__)
 print("wordcloud:", WordCloud.__module__.split('.')[0], "version not directly accessible")
-print("scikit-learn version:", sklearn.__version__)
+
 # =========================================================
 # System cleanup
 # =========================================================
@@ -127,47 +122,10 @@ def load_dataset(cfg, dataset_name):
 # =========================================================
 # Load ML model (local only)
 # =========================================================
-# =========================================================
-# Load ML model (Streamlit Cloud safe)
-# =========================================================
-@st.cache_resource(show_spinner=False)
-def load_ml_model(model_file, vector_file):
-    import pickle
-    from pathlib import Path
-
-    model_path = Path(__file__).parent / model_file
-    vector_path = Path(__file__).parent / vector_file
-
-    # Check if files exist
-    if not model_path.exists():
-        st.error(f"ML model file not found: {model_path}")
-        return None, None
-    if not vector_path.exists():
-        st.error(f"Vectorizer file not found: {vector_path}")
-        return None, None
-
-    # Load pre-fitted model and vectorizer
-    with open(model_path, "rb") as f:
-        model = pickle.load(f)
-    with open(vector_path, "rb") as f:
-        vectorizer = pickle.load(f)
-
-    # Debug check
-    if not hasattr(vectorizer, "idf_"):
-        st.error(f"Vectorizer {vector_file} is not fitted properly!")
-    
-    return model, vectorizer
-
-
-    # Check if vectorizer is fitted
-    if not hasattr(vec, "idf_"):
-        st.warning(f"Vectorizer {vector_file} is not fitted. Fitting on dataset text...")
-        if df_text is not None:
-            vec.fit(df_text)
-            st.success(f"Vectorizer {vector_file} fitted automatically.")
-        else:
-            st.error(f"Cannot fit vectorizer: dataset text not provided.")
-    
+@st.cache_resource
+def load_ml_model(model_file, vector_file, dataset_name):
+    with open(model_file, "rb") as f: model = pickle.load(f)
+    with open(vector_file, "rb") as f: vec = pickle.load(f)
     return model, vec
 
 # =========================================================
@@ -192,28 +150,18 @@ st.markdown("""
 # =========================================================
 # Sidebar – model selection
 # =========================================================
-# Sidebar – model selection
 st.sidebar.title("Model Selection")
 model_type = st.sidebar.radio("Select Model Type:", ["ML (Traditional)", "DL (BiLSTM)"])
-
 if model_type == "ML (Traditional)":
     dataset = st.sidebar.selectbox("Select Dataset", list(ml_datasets))
     cfg = ml_datasets[dataset]
-    
-    # Load ML model and vectorizer (Streamlit Cloud safe)
-    model, vectorizer = load_ml_model(cfg["model"], cfg["vectorizer"])
-    if model is None or vectorizer is None:
-        st.stop()  # Stop the app if files are missing
-
+    model, vectorizer = load_ml_model(cfg["model"], cfg["vectorizer"], dataset)
     is_ml = True
 else:
     dataset = st.sidebar.selectbox("Select Dataset", list(dl_datasets))
     cfg = dl_datasets[dataset]
     model, tokenizer = load_dl_model(cfg["model"], cfg["tokenizer"], dataset)
     is_ml = False
-
-
-
 
 df, label_col = load_dataset(cfg, dataset)
 text_col = cfg["text_col"]

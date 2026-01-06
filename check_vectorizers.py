@@ -1,23 +1,13 @@
-import pickle
-from sklearn.feature_extraction.text import TfidfVectorizer
-import pandas as pd
-
-# Load your training dataset text
-df = pd.read_csv("Pandy-Dataset_sample20.csv")  # Or full dataset
-texts = df['text'].astype(str).tolist()
-
-# Create and fit vectorizer
-vectorizer = TfidfVectorizer(ngram_range=(1,2), max_features=5000)
-vectorizer.fit(texts)
-
-# Save the fitted vectorizer
-with open("pandy_vectorizer.pkl", "wb") as f:
-    pickle.dump(vectorizer, f)
-
-print("vedctorizer fitted and saved as pandy_vectorizer.pkl")
+from pathlib import Path
 import pickle
 
-with open("pandy_vectorizer.pkl", "rb") as f:
-    vec = pickle.load(f)
+vector_file = "pandy_vectorizer.pkl"
+vector_path = Path(__file__).parent / vector_file
 
-print(hasattr(vec, "idf_"))
+print("Vectorizer exists?", vector_path.exists())
+
+with open(vector_path, "rb") as f:
+    vectorizer = pickle.load(f)
+
+print("Vectorizer type:", type(vectorizer))
+print("Vectorizer fitted?", hasattr(vectorizer, "idf_"))
