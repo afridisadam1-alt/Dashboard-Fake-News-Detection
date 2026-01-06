@@ -265,10 +265,39 @@ st.session_state.input_text = st.text_area("Enter text to predict:", st.session_
 # =========================================================
 # Prediction button
 # =========================================================
+# =========================================================
+# Prediction button with colored label
+# =========================================================
+# =========================================================
+# Prediction button with zoom animation and color
+# =========================================================
 if st.button("Predict") and st.session_state.input_text:
     label = predict(st.session_state.input_text)
-    st.success(f"Prediction ({dataset}): {label}")
+    
+    # Set color: red for Fake/Disinformation, green otherwise
+    color = "red" if label.lower() in ["fake", "disinformation"] else "green"
+    
+    # HTML + CSS for zoom animation
+    html_code = f"""
+    <style>
+    @keyframes zoomIn {{
+        0% {{ transform: scale(0.5); opacity: 0; }}
+        50% {{ transform: scale(1.2); opacity: 1; }}
+        100% {{ transform: scale(1); opacity: 1; }}
+    }}
+    .zoom-label {{
+        color: {color};
+        font-weight: bold;
+        font-size: 28px;
+        animation: zoomIn 0.6s ease-out;
+    }}
+    </style>
+    <div class="zoom-label">Prediction ({dataset}): {label}</div>
+    """
+    
+    st.markdown(html_code, unsafe_allow_html=True)
 
+    # Continue with ML or DL visualization
     if is_ml:
         st.subheader("📊 Most Important Words (Unigram + Bigram TF-IDF)")
         X = vectorizer.transform([st.session_state.input_text.lower()])
