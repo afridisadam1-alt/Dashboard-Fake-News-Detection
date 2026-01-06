@@ -1,24 +1,23 @@
 import pickle
-from sklearn.utils.validation import check_is_fitted
+from sklearn.feature_extraction.text import TfidfVectorizer
+import pandas as pd
 
-# List of your ML vectorizer files
-files = ["pandy_vectorizer.pkl", "euvsipf_vectorizer.pkl", "euvsdisinfo_vectorizer.pkl"]
+# Load your training dataset text
+df = pd.read_csv("Pandy-Dataset_sample20.csv")  # Or full dataset
+texts = df['text'].astype(str).tolist()
 
-for f in files:
-    with open(f, "rb") as file:
-        vec = pickle.load(file)
-    try:
-        check_is_fitted(vec)
-        print(f"{f} is fitted ✅")
-    except Exception as e:
-        print(f"{f} is NOT fitted ❌: {e}")
-GDRIVE_ML_MODELS = {
-    "George McIntire": {"model": "pandy_vectorizer.pkl", "vectorizer": "pandy_vectorizer.pkl"},
-    "EUvsIPF": {"model": "euvsipf_pac.pkl", "vectorizer": "euvsipf_vectorizer.pkl"},
-    "EUvsDisinfo": {"model": "euvsdisinfo_pac.pkl", "vectorizer": "euvsdisinfo_vectorizer.pkl"},
-}
-GDRIVE_DL_MODELS = {
-    "FA-KES": {"model": "FA-KES_bilstm.h5", "tokenizer": "FA-KES_tokenizer.pkl"},
-    "ISOT": {"model": "ISOT_bilstm.h5", "tokenizer": "ISOT_tokenizer.pkl"},
-    "EUvsISOT": {"model": "EUvsISOT_bilstm.h5", "tokenizer": "EUvsISOT_tokenizer.pkl"},
-}
+# Create and fit vectorizer
+vectorizer = TfidfVectorizer(ngram_range=(1,2), max_features=5000)
+vectorizer.fit(texts)
+
+# Save the fitted vectorizer
+with open("pandy_vectorizer.pkl", "wb") as f:
+    pickle.dump(vectorizer, f)
+
+print("vedctorizer fitted and saved as pandy_vectorizer.pkl")
+import pickle
+
+with open("pandy_vectorizer.pkl", "rb") as f:
+    vec = pickle.load(f)
+
+print(hasattr(vec, "idf_"))

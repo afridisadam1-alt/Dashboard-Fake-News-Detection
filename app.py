@@ -18,7 +18,8 @@ import tensorflow as tf
 
 
 import sklearn
-st.write(sklearn.__version__)
+st.write("scikit-learn version:", sklearn.__version__)
+
 
 # =========================================================
 # Check package versions
@@ -31,7 +32,7 @@ print("python-docx:", Document.__module__.split('.')[0], "version not directly a
 print("tensorflow:", tf.__version__)
 print("altair:", alt.__version__)
 print("wordcloud:", WordCloud.__module__.split('.')[0], "version not directly accessible")
-
+print("scikit-learn version:", sklearn.__version__)
 # =========================================================
 # System cleanup
 # =========================================================
