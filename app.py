@@ -260,93 +260,92 @@ if uploaded_file:
 # =========================================================
 # Text area
 # =========================================================
-st.session_state.input_text = st.text_area("Enter text to predict:", st.session_state.get("input_text",""), height=200)
+# =========================================================
+# Display selected or uploaded text (manual input disabled)
+# =========================================================
+if "input_text" in st.session_state and st.session_state.input_text.strip() != "":
+    st.text_area(
+        "Selected text for prediction (cannot edit):",
+        st.session_state.input_text,
+        height=200,
+        disabled=True
+    )
+else:
+    st.info("Select a row from the dataset or upload a file to predict")
 
-# =========================================================
-# Prediction button
-# =========================================================
-# =========================================================
-# Prediction button with colored label
-# =========================================================
-# =========================================================
-# Prediction button with zoom animation and color
-# =========================================================
 # =========================================================
 # Dynamic color Predict button
 # =========================================================
-# Default color before prediction
-button_color = "#4CAF50"  # green
-
-# Create a placeholder for the button
+button_color = "#4CAF50"  # default green
 button_placeholder = st.empty()
 
-# Render button inside placeholder
-if button_placeholder.button("Predict", key="predict_btn"):
-    # Run prediction
-    label = predict(st.session_state.input_text)
+# Only allow prediction if input_text exists
+if "input_text" in st.session_state and st.session_state.input_text.strip() != "":
+    if button_placeholder.button("Predict", key="predict_btn"):
+        # Run prediction
+        label = predict(st.session_state.input_text)
 
-    # Decide color based on label
-    if label.lower() in ["fake", "disinformation"]:
-        button_color = "#FF4B4B"  # red
-    else:
-        button_color = "#4CAF50"  # green
-
-    # Update button style dynamically via st.markdown
-    st.markdown(f"""
-    <style>
-    div.stButton > button:first-child {{
-        background-color: {button_color};
-        color: white;
-        font-size: 24px;
-        padding: 12px 0px;
-        border-radius: 8px;
-        font-weight: bold;
-    }}
-    div.stButton > button:first-child:hover {{
-        background-color: {'#d43f3f' if button_color=='#FF4B4B' else '#45a049'};
-    }}
-    </style>
-    """, unsafe_allow_html=True)
-
-    # Show animated prediction label below
-    html_code = f"""
-    <style>
-    @keyframes zoomIn {{
-        0% {{ transform: scale(0.5); opacity: 0; }}
-        50% {{ transform: scale(1.2); opacity: 1; }}
-        100% {{ transform: scale(1); opacity: 1; }}
-    }}
-    .zoom-label {{
-        color: {button_color};
-        font-weight: bold;
-        font-size: 28px;
-        animation: zoomIn 0.6s ease-out;
-    }}
-    </style>
-    <div class="zoom-label">Prediction ({dataset}): {label}</div>
-    """
-    st.markdown(html_code, unsafe_allow_html=True)
-    if is_ml:
-        st.subheader("📊 Most Important Words (Unigram + Bigram TF-IDF)")
-        X = vectorizer.transform([st.session_state.input_text.lower()])
-        if X.nnz > 0:
-            names = vectorizer.get_feature_names_out()
-            pw = pd.DataFrame({"Word":names[X.indices],"Importance":X.data}).sort_values("Importance",ascending=False).head(20)
-            chart = alt.Chart(pw).mark_bar().encode(
-                x=alt.X("Importance:Q"),
-                y=alt.Y("Word:N", sort='-x'),
-                tooltip=["Word","Importance"]
-            ).properties(height=400)
-            st.altair_chart(chart)
+        # Decide color based on prediction
+        if label.lower() in ["fake", "disinformation"]:
+            button_color = "#FF4B4B"  # red
         else:
-            st.info("No prominent words detected.")
-    else:
-        st.subheader("☁️ Word Cloud (Deep Learning Input Text)")
-        wc = WordCloud(width=800,height=400,background_color="white",colormap="viridis").generate(st.session_state.input_text)
-        fig, ax = plt.subplots(figsize=(10,5))
-        ax.imshow(wc.to_image())
-        ax.axis("off")
-        st.pyplot(fig)
+            button_color = "#4CAF50"  # green
 
+        # Update button style dynamically
+        st.markdown(f"""
+        <style>
+        div.stButton > button:first-child {{
+            background-color: {button_color};
+            color: white;
+            font-size: 24px;
+            padding: 12px 0px;
+            border-radius: 8px;
+            font-weight: bold;
+        }}
+        div.stButton > button:first-child:hover {{
+            background-color: {'#d43f3f' if button_color=='#FF4B4B' else '#45a049'};
+        }}
+        </style>
+        """, unsafe_allow_html=True)
 
-    # Continue with ML or DL visualizations...
+        # Animated prediction label
+        html_code = f"""
+        <style>
+        @keyframes zoomIn {{
+            0% {{ transform: scale(0.5); opacity: 0; }}
+            50% {{ transform: scale(1.2); opacity: 1; }}
+            100% {{ transform: scale(1); opacity: 1; }}
+        }}
+        .zoom-label {{
+            color: {button_color};
+            font-weight: bold;
+            font-size: 28px;
+            animation: zoomIn 0.6s ease-out;
+        }}
+        </style>
+        <div class="zoom-label">Prediction ({dataset}): {label}</div>
+        """
+        st.markdown(html_code, unsafe_allow_html=True)
+
+        # Visualizations
+        if is_ml:
+            st.subheader("📊 Most Important Words (Unigram + Bigram TF-IDF)")
+            X = vectorizer.transform([st.session_state.input_text.lower()])
+            if X.nnz > 0:
+                names = vectorizer.get_feature_names_out()
+                pw = pd.DataFrame({"Word":names[X.indices],"Importance":X.data}).sort_values("Importance",ascending=False).head(20)
+                chart = alt.Chart(pw).mark_bar().encode(
+                    x=alt.X("Importance:Q"),
+                    y=alt.Y("Word:N", sort='-x'),
+                    tooltip=["Word","Importance"]
+                ).properties(height=400)
+                st.altair_chart(chart)
+            else:
+                st.info("No prominent words detected.")
+        else:
+            st.subheader("☁️ Word Cloud (Deep Learning Input Text)")
+            wc = WordCloud(width=800,height=400,background_color="white",colormap="viridis").generate(st.session_state.input_text)
+            fig, ax = plt.subplots(figsize=(10,5))
+            ax.imshow(wc.to_image())
+            ax.axis("off")
+            st.pyplot(fig)
