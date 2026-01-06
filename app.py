@@ -326,5 +326,27 @@ if button_placeholder.button("Predict", key="predict_btn"):
     <div class="zoom-label">Prediction ({dataset}): {label}</div>
     """
     st.markdown(html_code, unsafe_allow_html=True)
+    if is_ml:
+        st.subheader("📊 Most Important Words (Unigram + Bigram TF-IDF)")
+        X = vectorizer.transform([st.session_state.input_text.lower()])
+        if X.nnz > 0:
+            names = vectorizer.get_feature_names_out()
+            pw = pd.DataFrame({"Word":names[X.indices],"Importance":X.data}).sort_values("Importance",ascending=False).head(20)
+            chart = alt.Chart(pw).mark_bar().encode(
+                x=alt.X("Importance:Q"),
+                y=alt.Y("Word:N", sort='-x'),
+                tooltip=["Word","Importance"]
+            ).properties(height=400)
+            st.altair_chart(chart)
+        else:
+            st.info("No prominent words detected.")
+    else:
+        st.subheader("☁️ Word Cloud (Deep Learning Input Text)")
+        wc = WordCloud(width=800,height=400,background_color="white",colormap="viridis").generate(st.session_state.input_text)
+        fig, ax = plt.subplots(figsize=(10,5))
+        ax.imshow(wc.to_image())
+        ax.axis("off")
+        st.pyplot(fig)
+
 
     # Continue with ML or DL visualizations...
