@@ -60,5 +60,4 @@ disinfo_env/
 .streamlit/cache/
 .streamlit/secrets.toml
 .streamlit/secrets.toml
-news_data.zip
-news_data/
+

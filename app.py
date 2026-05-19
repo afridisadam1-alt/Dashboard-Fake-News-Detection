@@ -834,16 +834,6 @@ if st.button("Predict", key="predict_btn"):
             st.session_state.summary = summary
 
         st.write(st.session_state.summary)
-        
-# =========================================================
-# GOOGLE SHEETS CONNECTION (FIXED)
-# =======================fAI Explanation (Gemini)==================================
-# =========================================================
-# GOOGLE SHEETS CONNECTION (STREAMLIT CLOUD)
-# =========================================================
-# =========================================================
-# GOOGLE SHEETS CONNECTION (CACHED)
-# =========================================================
 import gspread
 from google.oauth2.service_account import Credentials
 import datetime
