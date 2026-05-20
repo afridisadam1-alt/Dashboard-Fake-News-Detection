@@ -125,9 +125,9 @@ st.markdown("""
 2. Search dataset content using the search box or radio buttons below
 3. Predict results using one of the following:
 
-   - a) Select a record from the dataset (radio buttons)
-   - b) Upload your own file (TXT, PDF, DOCX, CSV)
-   - c) Select from ZIP folder (preloaded news articles)
+    - a) Select a record from the dataset (radio buttons)
+    - b) Select from ZIP folder (preloaded news articles)
+    - c) Upload your own file (TXT, PDF, DOCX, CSV)
 
 4. Click **Predict**
 5. Review explanation visualizations
