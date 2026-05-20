@@ -915,29 +915,30 @@ with st.form("feedback_form"):
     # SUS-Inspired Usability Questions
     # -------------------------------
     st.markdown("### Usability (SUS-Inspired)")
+    scale_hint = "(1 = Strongly Disagree → 5 = Strongly Agree)"
 
     q1 = st.slider(
-        "The dashboard was easy to use.",
+        f"The dashboard was easy to use {scale_hint}.",
         1, 5, 3
     )
 
     q2 = st.slider(
-        "I was able to navigate the dashboard without difficulty.",
+        f"I was able to navigate the dashboard without difficulty {scale_hint}.",
         1, 5, 3
     )
 
     q3 = st.slider(
-        "I learned how to use the dashboard quickly.",
+        f"I learned how to use the dashboard quickly {scale_hint}.",
         1, 5, 3
     )
 
     q4 = st.slider(
-        "The dashboard interface was clear and well organised.",
+        f"The dashboard interface was clear and well organised {scale_hint}.",
         1, 5, 3
     )
 
     q5 = st.slider(
-        "The system responded quickly during use.",
+        f"The system responded quickly during use {scale_hint}.",
         1, 5, 3
     )
 
@@ -947,12 +948,12 @@ with st.form("feedback_form"):
     st.markdown("### Explainability")
 
     q6 = st.slider(
-        "The model predictions were clearly presented.",
+        f"The model predictions were clearly presented {scale_hint}.",
         1, 5, 3
     )
 
     q7 = st.slider(
-        "The visualisations and summary helped me understand the prediction results.",
+        f"The visualisations and summary helped me understand the prediction results {scale_hint}.",
         1, 5, 3
     )
 
@@ -962,7 +963,7 @@ with st.form("feedback_form"):
     st.markdown("### Trust")
 
     q8 = st.slider(
-        "I trust the system’s predictions.",
+        f"I trust the system’s predictions {scale_hint}.",
         1, 5, 3
     )
 
@@ -972,12 +973,12 @@ with st.form("feedback_form"):
     st.markdown("### Usefulness")
 
     q9 = st.slider(
-        "This system is useful for identifying fake news/disinformation.",
+        f"This system is useful for identifying fake news/disinformation {scale_hint}.",
         1, 5, 3
     )
 
     q10 = st.slider(
-        "The dashboard helped me make better decisions about whether news content was trustworthy.",
+        f"The dashboard helped me make better decisions about whether news content was trustworthy {scale_hint}.",
         1, 5, 3
     )
 
@@ -987,7 +988,7 @@ with st.form("feedback_form"):
     st.markdown("### Future Adoption")
 
     q11 = st.slider(
-        "I would use this system again in the future.",
+        f"I would use this system again in the future {scale_hint}.",
         1, 5, 3
     )
 
