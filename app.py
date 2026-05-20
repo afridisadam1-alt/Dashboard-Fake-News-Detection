@@ -952,7 +952,7 @@ with st.form("feedback_form"):
     )
 
     q7 = st.slider(
-        "The visualisations helped me understand the prediction results.",
+        "The visualisations and summary helped me understand the prediction results.",
         1, 5, 3
     )
 
