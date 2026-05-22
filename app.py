@@ -918,27 +918,49 @@ with st.form("feedback_form"):
     scale_hint = "(1 = Strongly Disagree → 5 = Strongly Agree)"
 
     q1 = st.slider(
-        f"The dashboard was easy to use {scale_hint}.",
+        f"I think that I would like to use this system frequently {scale_hint}.",
         1, 5, 3
     )
 
     q2 = st.slider(
-        f"I was able to navigate the dashboard without difficulty {scale_hint}.",
+        f"I found the system unnecessarily complex {scale_hint}.",
         1, 5, 3
     )
 
     q3 = st.slider(
-        f"I learned how to use the dashboard quickly {scale_hint}.",
+        f"I thought the system was easy to use {scale_hint}.",
         1, 5, 3
     )
 
     q4 = st.slider(
-        f"The dashboard interface was clear and well organised {scale_hint}.",
+        f"I think that I would need the support of a technical person to use this system {scale_hint}.",
         1, 5, 3
     )
 
     q5 = st.slider(
-        f"The system responded quickly during use {scale_hint}.",
+        f"I found the various functions in this system were well integrated {scale_hint}.",
+        1, 5, 3
+    )
+
+    q6 = st.slider(
+        f"I thought there was too much inconsistency in this system {scale_hint}.",
+        1, 5, 3
+    )
+    q7 = st.slider(
+        f"I would imagine that most people would learn to use this system very quickly {scale_hint}.",
+        1, 5, 3
+    )
+
+    q8 = st.slider(
+        f"I found the system very cumbersome (Difficult) to use {scale_hint}.",
+        1, 5, 3
+    )
+    q9 = st.slider(
+        f"I felt very confident using the system {scale_hint}.",
+        1, 5, 3
+    )
+    q10 = st.slider(
+        f"I needed to learn a lot of things before I could get going with this system {scale_hint}.",
         1, 5, 3
     )
 
@@ -947,22 +969,21 @@ with st.form("feedback_form"):
     # -------------------------------
     st.markdown("### Explainability")
 
-    q6 = st.slider(
+    q11 = st.slider(
         f"The model predictions were clearly presented {scale_hint}.",
         1, 5, 3
     )
 
-    q7 = st.slider(
+    q12 = st.slider(
         f"The visualisations and summary helped me understand the prediction results {scale_hint}.",
         1, 5, 3
     )
-
     # -------------------------------
     # Trust
     # -------------------------------
     st.markdown("### Trust")
 
-    q8 = st.slider(
+    q13 = st.slider(
         f"I trust the system’s predictions {scale_hint}.",
         1, 5, 3
     )
@@ -972,12 +993,12 @@ with st.form("feedback_form"):
     # -------------------------------
     st.markdown("### Usefulness")
 
-    q9 = st.slider(
+    q14 = st.slider(
         f"This system is useful for identifying fake news/disinformation {scale_hint}.",
         1, 5, 3
     )
 
-    q10 = st.slider(
+    q15 = st.slider(
         f"The dashboard helped me make better decisions about whether news content was trustworthy {scale_hint}.",
         1, 5, 3
     )
@@ -987,7 +1008,7 @@ with st.form("feedback_form"):
     # -------------------------------
     st.markdown("### Future Adoption")
 
-    q11 = st.slider(
+    q16 = st.slider(
         f"I would use this system again in the future {scale_hint}.",
         1, 5, 3
     )
@@ -1017,25 +1038,30 @@ if submit:
                 news_freq,
 
                 # SUS-inspired usability
-                q1,  # Ease_of_Use
-                q2,  # Navigation
-                q3,  # Learnability
-                q4,  # Interface_Design
-                q5,  # System_Speed
+                q1,  # FrequentUse
+                q2,  # Complex
+                q3,  # EasyUse
+                q4,  # TechSupport
+                q5,  # WellIntegrated
+                q6,  # Inconsistency
+                q7,  # QuickLearning
+                q8,  # Cumbersome (Difficult)
+                q9,  # Confidence
+                q10,  # LearnBeforeUse
 
                 # Explainability
-                q6,  # Prediction_Clarity
-                q7,  # Visualization_Helpfulness
+                q11,  # Prediction_Clarity
+                q12,  # Visualization_Helpfulness
 
                 # Trust
-                q8,  # Trust
+                q13,  # Trust
 
                 # Usefulness
-                q9,  # Usefulness
-                q10, # Decision_Support
+                q14,  # Usefulness
+                q15, # Decision_Support
 
                 # Adoption
-                q11, # Reuse_Intention
+                q16, # Reuse_Intention
 
                 comments
             ])
