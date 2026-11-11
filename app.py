@@ -118,29 +118,14 @@ to support transparent and interpretable decision-making.
 </div>
             
 """, unsafe_allow_html=True)
-st.markdown("""
-## 📘 User Testing Instructions
 
-1. Select ML or DL model (top left sidebar)
-2. Search dataset content using the search box or radio buttons below
-3. Predict results using one of the following:
 
-    - a) Select a record from the dataset (radio buttons)
-    - b) Select from ZIP folder (preloaded news articles)
-    - c) Upload your own file (TXT, PDF, DOCX, CSV)
-
-4. Click **Predict**
-5. Review explanation visualizations
-6. Understand the prediction result with AI-generated summary
-7. Complete the feedback questionnaire
-""")
 # =========================================================
 # Check package versions
 # =========================================================
 print("streamlit:", st.__version__)
 print("pandas:", pd.__version__)
 print("numpy:", np.__version__)
-print("PyPDF2:", PdfReader.__module__.split('.')[0], "version not directly accessible")
 print("python-docx:", Document.__module__.split('.')[0], "version not directly accessible")
 print("tensorflow:", tf.__version__)
 print("altair:", alt.__version__)
@@ -277,9 +262,9 @@ st.markdown("""
 # =========================================================
 # Sidebar – model selection
 # =========================================================
-st.sidebar.title("Model Selection")
-model_type = st.sidebar.radio("Select Model Type:", ["ML (Traditional)", "DL (BiLSTM)"])
-if model_type == "ML (Traditional)":
+#st.sidebar.title("Model Selection")
+model_type = st.sidebar.radio("Machine Learning:", ["ML (Passive Aggressive Classifier)"])
+if model_type == "ML (Passive Aggressive Classifier)":
     dataset = list(ml_datasets.keys())[0]
     cfg = ml_datasets[dataset]
     model, vectorizer = load_ml_model(cfg["model"], cfg["vectorizer"], dataset)
@@ -309,12 +294,7 @@ def predict(text):
         label_map = DL_POSITIVE_LABEL.get(dataset, PRED_LABEL_MAP.get(dataset, {}))
         return label_map.get(pred_class, "Disinformation" if pred_class==1 else "True")
 
-# =========================================================
-# Dataset exploration
-# =========================================================
-st.subheader("Dataset Label Distribution")
-df_vc = df[df[label_col].notna()]
-st.dataframe(df_vc[label_col].value_counts().rename("Count"), width='stretch')
+
 
 # =========================================================
 # Text search / filter
@@ -431,14 +411,14 @@ try:
         # DISPLAY FOLDER STRUCTURE
         # =====================================================
 
-        st.subheader("📂 ZIP Folder Structure")
+        #st.subheader("📂 ZIP Folder Structure")
 
-        for main_folder, subfolders in folder_structure.items():
+        #for main_folder, subfolders in folder_structure.items():
 
-            st.markdown(f"### 📁 {main_folder}")
+            #st.markdown(f"### 📁 {main_folder}")
 
-            for sf in sorted(list(subfolders))[:5]:
-                st.markdown(f"- 📂 {sf}")
+            #for sf in sorted(list(subfolders))[:5]:
+                #st.markdown(f"- 📂 {sf}")
 
         # =====================================================
         # FILE LIST FOR SELECTION
@@ -708,8 +688,32 @@ else:
 
 
 
-if st.button("Predict", key="predict_btn"):
+st.markdown("""
+<style>
+.st-key-predict_btn button {
+    background-color: #DC2626;  /* red */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1.5rem;
+    transition: all 0.2s ease;
+}
 
+.st-key-predict_btn button:hover {
+    background-color: #16A34A;  /* green */
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(79, 70, 229, 0.35);
+}
+
+.st-key-predict_btn button:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+</style>
+""", unsafe_allow_html=True)
+
+if st.button("Analyse", key="predict_btn"):
     current_text = clean_text(st.session_state.input_text)
     current_source = st.session_state.active_source
 
